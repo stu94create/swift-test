@@ -1,0 +1,44 @@
+# Codemagic cloud-build configuration.
+#
+# Codemagic is a hosted CI service that runs builds on real macOS machines in
+# the cloud, so you never need a Mac of your own. This file defines a single
+# "workflow" that runs automatically on every push.
+workflows:
+  ios-simulator-build:
+    name: iOS Simulator Build (no signing)
+    instance_type: mac_mini_m2      # the cloud Mac your build runs on
+    max_build_duration: 30
+    environment:
+      xcode: latest                 # use the latest Xcode preinstalled on the runner
+    triggering:
+      events:
+        - push                      # build on every push to the repository
+    scripts:
+      - name: Install XcodeGen
+        # XcodeGen isn't preinstalled, so we install it via Homebrew first.
+        script: |
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        # Turn project.yml into MyApp.xcodeproj on the build machine.
+        script: |
+          xcodegen generate
+
+      - name: Build for iOS Simulator (code signing disabled)
+        # We build the app for the Simulator and explicitly turn OFF code
+        # signing. Signing is only required to run on a physical device or to
+        # distribute through the App Store — neither applies to a Simulator
+        # build, so disabling it keeps this milestone simple.
+        script: |
+          xcodebuild build \
+            -project MyApp.xcodeproj \
+            -scheme MyApp \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+    artifacts:
+      # The compiled .app bundle, saved so you can download it after the build.
+      - build/Build/Products/Debug-iphonesimulator/*.app

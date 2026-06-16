@@ -1,0 +1,13 @@
+# Generated Xcode project — recreated from project.yml on every build,
+# so it should never be committed.
+*.xcodeproj
+
+# Build output
+build/
+DerivedData/
+
+# macOS clutter
+.DS_Store
+
+# XcodeGen / Swift package caches
+.swiftpm/

@@ -1,0 +1,30 @@
+# XcodeGen specification.
+#
+# XcodeGen turns this single YAML file into a full .xcodeproj at build time.
+# Because the .xcodeproj is generated, it never needs to exist on disk locally
+# and is kept out of git (see .gitignore). To regenerate it anywhere XcodeGen
+# is installed, just run:  xcodegen generate
+name: MyApp
+
+options:
+  # The lowest iOS version the app supports. iOS 16 is a safe, modern baseline.
+  deploymentTarget:
+    iOS: "16.0"
+  # Used to build the default bundle identifier below.
+  bundleIdPrefix: com.example
+
+targets:
+  MyApp:
+    type: application        # a normal, installable iOS app (not a library)
+    platform: iOS
+    sources:
+      - Sources/MyApp        # all .swift files and the Info.plist live here
+    info:
+      path: Sources/MyApp/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.MyApp
+        # Swift's modern concurrency-safe default; harmless and forward-looking.
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"   # 1 = iPhone, 2 = iPad
+        GENERATE_INFOPLIST_FILE: NO
