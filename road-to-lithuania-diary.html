@@ -23,10 +23,17 @@
   To reuse for a future episode: edit the scenes in the editor, or use
   Export / Import JSON, or press "Reset to sample project" and start fresh.
 
+  The project's "journey" (a list of stops with optional latitude/longitude
+  and transport) drives a progressively-revealed route map: completed legs
+  turn gold as the episode reaches each stop, the current leg animates with
+  a moving bus/plane, and a small progress strip sits under the series
+  labels. Progress is inferred automatically from each scene's location /
+  from / to fields. Future episodes just change the stops list.
+
   Code layout (search for the banner comments below):
     - CSS: page styles, then stage (9:16 canvas) styles, then scene-type art
     - JS : sample data → state & persistence → audio → stage rendering →
-           scene editor → project tools → recording mode → init
+           journey engine → scene editor → project tools → recording mode → init
   ============================================================================
 -->
 <style>
@@ -139,21 +146,30 @@ button:disabled { opacity: 0.5; cursor: default; }
   margin: 12px 0;
   min-height: 44px;
 }
+/* In recording mode the status region stays in the page (so VoiceOver still
+   hears announcements like "Episode finished") but is visually hidden. */
+body.recording #status {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 
-/* --- Scene editor cards -------------------------------------------------- */
-fieldset.scene-card {
+/* --- Scene editor cards (collapsible, one VoiceOver stop each when closed) */
+details.scene-card {
   border: 1px solid #3a4266;
   border-radius: var(--radius);
   background: var(--panel-2);
   margin: 0 0 16px;
-  padding: 6px 14px 14px;
 }
-fieldset.scene-card legend {
+details.scene-card summary {
   font-weight: 700;
-  padding: 0 8px;
-  background: var(--panel);
-  border-radius: 8px;
+  padding: 12px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  border-radius: var(--radius);
 }
+details.scene-card summary::marker { color: var(--accent); }
+details.scene-card .card-body { padding: 0 14px 14px; }
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -182,14 +198,16 @@ fieldset.scene-card legend {
   box-shadow: 0 10px 40px rgba(0,0,0,0.55);
 }
 
-/* Scene layers stack and crossfade */
+/* Scene layers stack and crossfade with a very slight settle-in zoom —
+   one consistent transition style for every scene type. */
 .scene-layer {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 0.8s ease;
+  transform: scale(1.025);
+  transition: opacity 0.8s ease, transform 1.6s ease;
 }
-.scene-layer.visible { opacity: 1; }
+.scene-layer.visible { opacity: 1; transform: scale(1); }
 
 /* Slow "Ken Burns" drift on scene backgrounds */
 .scene-bg {
@@ -231,26 +249,61 @@ fieldset.scene-card legend {
   text-shadow: 0 1px 6px rgba(0,0,0,0.6);
 }
 
-/* Scene text block */
+/* Journey progress strip: small, unobtrusive row of stop names under the
+   series labels. Reached stops turn gold as the episode progresses. */
+.journey-strip {
+  margin: 12px 6% 0;
+  text-align: center;
+  font-size: clamp(9px, 2.4cqw, 11px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: rgba(255,255,255,0.38);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+.journey-strip .reached { color: var(--accent); }
+.journey-strip .sep { padding: 0 5px; color: rgba(255,255,255,0.25); }
+
+/* Scene text block — identical placement, spacing and type on every scene
+   so the whole episode reads as one continuous series. */
 .scene-text {
   position: absolute;
   left: 7%; right: 7%;
-  top: 38%;
+  top: 36%;
   text-align: center;
   text-shadow: 0 2px 14px rgba(0,0,0,0.65);
+}
+.scene-kicker {
+  font-size: clamp(12px, 3.2cqw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 10px;
+  animation: rise-in 0.9s ease both;
 }
 .scene-title {
   font-size: clamp(26px, 9cqw, 44px);
   font-weight: 800;
   line-height: 1.12;
+  letter-spacing: -0.01em;
   margin: 0;
   animation: rise-in 0.9s ease both;
+}
+/* Recurring series mark: a short gold rule under every title. */
+.scene-title::after {
+  content: "";
+  display: block;
+  width: 34px; height: 3px;
+  margin: 14px auto 0;
+  background: var(--accent);
+  border-radius: 2px;
 }
 .scene-subtitle {
   font-size: clamp(15px, 4.6cqw, 22px);
   font-weight: 500;
   color: rgba(255,255,255,0.92);
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   animation: rise-in 0.9s 0.15s ease both;
 }
 .scene-route-label {
@@ -268,21 +321,24 @@ fieldset.scene-card legend {
   to   { opacity: 1; transform: none; }
 }
 
-/* Caption pill near the bottom */
+/* Caption pill — kept inside TikTok-safe area (clear of the right-hand icon
+   rail and the bottom caption zone), high contrast, integrated styling. */
 .scene-caption {
   position: absolute;
   left: 6%; right: 6%;
-  bottom: 10%;
+  bottom: 12%;
   text-align: center;
 }
 .scene-caption span {
   display: inline-block;
-  background: rgba(5, 8, 18, 0.72);
+  max-width: 100%;
+  background: rgba(5, 8, 18, 0.8);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   border-radius: 14px;
+  border-bottom: 2px solid rgba(255, 211, 77, 0.55);
   padding: 10px 14px;
-  font-size: clamp(13px, 4cqw, 17px);
+  font-size: clamp(14px, 4.2cqw, 18px);
   line-height: 1.45;
   animation: rise-in 0.9s 0.25s ease both;
 }
@@ -291,7 +347,7 @@ fieldset.scene-card legend {
 #stage-progress {
   position: absolute;
   left: 0; bottom: 0;
-  height: 5px;
+  height: 3px;
   width: 0%;
   background: var(--accent);
   z-index: 6;
@@ -316,94 +372,148 @@ fieldset.scene-card legend {
 
 /* ==========================================================================
    3. GENERATED SCENE-TYPE BACKGROUNDS (used when no image supplied)
+   One shared deep-navy base for every scene so the whole episode reads as a
+   single series; each type only adds a subtle coloured glow.
    ========================================================================== */
-.bg-title    { background: linear-gradient(160deg, #1b2a6b 0%, #4527a0 55%, #0d1333 100%); }
-.bg-map      { background: linear-gradient(165deg, #0b2b3d 0%, #123a2e 60%, #081726 100%); }
-.bg-location { background: linear-gradient(160deg, #7b2d55 0%, #b3452e 60%, #2a0f2e 100%); }
-.bg-route    { background: linear-gradient(160deg, #14477a 0%, #1a6f8f 55%, #0b1c3a 100%); }
-.bg-travel   { background: linear-gradient(170deg, #2a6fb0 0%, #7fb6e0 70%, #d8ecff 100%); }
-.bg-tennis   { background: linear-gradient(160deg, #14532d 0%, #1d7a3f 55%, #062812 100%); }
-.bg-end      { background: linear-gradient(160deg, #101010 0%, #3d2f00 60%, #000 100%); }
+:root { --scene-base: linear-gradient(175deg, #131a35 0%, #0c1226 45%, #070b18 100%); }
+
+.bg-title    { background: radial-gradient(120% 70% at 50% 12%, rgba(255,211,77,0.15), transparent 60%), var(--scene-base); }
+.bg-map      { background: radial-gradient(110% 70% at 50% 62%, rgba(77,208,225,0.11), transparent 65%), var(--scene-base); }
+.bg-location { background: radial-gradient(110% 70% at 50% 68%, rgba(255,150,80,0.13), transparent 65%), var(--scene-base); }
+.bg-route    { background: radial-gradient(120% 70% at 50% 58%, rgba(90,170,255,0.12), transparent 65%), var(--scene-base); }
+.bg-travel   { background: radial-gradient(120% 80% at 50% 30%, rgba(120,190,255,0.14), transparent 65%), var(--scene-base); }
+.bg-tennis   { background: radial-gradient(110% 70% at 50% 64%, rgba(90,220,140,0.12), transparent 65%), var(--scene-base); }
+.bg-end      { background: radial-gradient(100% 60% at 50% 42%, rgba(255,211,77,0.11), transparent 60%), var(--scene-base); }
 
 /* Decorative art inside generated backgrounds (all aria-hidden) */
 .deco { position: absolute; inset: 0; overflow: hidden; }
 .deco svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-/* Dashed route line animation (map & route scenes).
-   non-scaling-stroke keeps lines crisp when the SVG scales to the stage. */
-.deco .route-path {
-  fill: none;
-  stroke: rgba(255,255,255,0.85);
-  stroke-width: 3;
-  stroke-dasharray: 10 12;
+/* Slow diagonal light sweep — gentle cinematic movement for title/end cards */
+.light-sweep {
+  position: absolute; inset: -20%;
+  background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.05) 50%, transparent 58%);
+  animation: sweep 9s ease-in-out infinite alternate;
+}
+@keyframes sweep {
+  from { transform: translateX(-10%); }
+  to   { transform: translateX(10%); }
+}
+
+/* --- Journey map (progressively-revealed route) ------------------------- */
+/* Faint coastline sketches behind the route, purely suggestive geography */
+.j-coast {
+  fill: rgba(255,255,255,0.05);
+  stroke: rgba(255,255,255,0.15);
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
-  animation: dash-move 3s linear infinite;
+}
+/* The full route, always faintly visible so the journey reads as one line */
+.j-route-all {
+  fill: none;
+  stroke: rgba(255,255,255,0.28);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+/* Legs already completed: solid series gold */
+.j-route-done {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+/* The leg currently being travelled: animated flowing dashes */
+.j-route-active {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  animation: dash-move 2.4s linear infinite;
 }
 @keyframes dash-move { to { stroke-dashoffset: -44; } }
 
-.deco .route-dot { fill: var(--accent); }
-.deco .route-halo {
+.j-stop        { fill: rgba(255,255,255,0.35); }
+.j-stop.reached{ fill: var(--accent); }
+.j-label {
+  fill: rgba(255,255,255,0.55);
+  font-size: 3.1px;
+  font-weight: 600;
+  letter-spacing: 0.35px;
+  text-anchor: middle;
+}
+.j-label.reached { fill: rgba(255,225,140,0.95); }
+.j-transport { fill: rgba(255,255,255,0.92); }
+
+.route-halo {
   fill: none; stroke: var(--accent); stroke-width: 2;
+  vector-effect: non-scaling-stroke;
   animation: halo 2.5s ease-out infinite;
-  transform-origin: center;
 }
 @keyframes halo {
   0%   { opacity: 0.9; }
   100% { opacity: 0; }
 }
+.route-dot { fill: var(--accent); }
 
-/* Transport emoji gliding across route scenes */
-.transport-glide {
-  position: absolute;
-  top: 30%;
-  left: -15%;
-  font-size: clamp(40px, 14cqw, 64px);
-  animation: glide 9s linear infinite;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-}
-@keyframes glide {
-  from { transform: translateX(0); }
-  to   { transform: translateX(160cqw); }
+/* Fallback dashed line for projects without journey data */
+.deco .route-path {
+  fill: none;
+  stroke: rgba(255,255,255,0.5);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+  vector-effect: non-scaling-stroke;
+  animation: dash-move 3s linear infinite;
 }
 
-/* Drifting clouds on travel scenes */
+/* Drifting clouds on travel scenes (kept subtle) */
 .cloud {
   position: absolute;
-  width: 42%; height: 10%;
-  background: rgba(255,255,255,0.5);
+  width: 42%; height: 8%;
+  background: rgba(255,255,255,0.16);
   border-radius: 999px;
   filter: blur(10px);
-  animation: cloud-drift 26s linear infinite;
+  animation: cloud-drift 30s linear infinite;
 }
 @keyframes cloud-drift {
   from { transform: translateX(-60cqw); }
   to   { transform: translateX(160cqw); }
 }
 
-/* Tennis court lines */
+/* Tennis details: quiet court markings + a small floating ball accent,
+   sharing the same navy identity as the travel scenes */
 .deco .court-line {
-  stroke: rgba(255,255,255,0.75);
-  stroke-width: 2.5;
+  stroke: rgba(255,255,255,0.7);
+  stroke-width: 1.5;
   fill: none;
   vector-effect: non-scaling-stroke;
 }
-.tennis-ball {
-  position: absolute;
-  width: 12cqw; height: 12cqw;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #f4ff6e, #cddc39);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
-  animation: ball-bounce 2.4s ease-in-out infinite alternate;
+.deco .ball-dot {
+  fill: #e8f26e;
+  animation: ball-float 5s ease-in-out infinite alternate;
 }
-@keyframes ball-bounce {
+@keyframes ball-float {
   from { transform: translateY(0); }
-  to   { transform: translateY(-9cqh); }
+  to   { transform: translateY(6px); }
 }
 
 /* Soft vignette on every generated background for text legibility */
 .vignette {
   position: absolute; inset: 0;
   background: radial-gradient(ellipse at center 45%, transparent 40%, rgba(0,0,0,0.55) 100%);
+}
+
+/* Extra legibility overlay used when a custom photo is the background */
+.img-overlay {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(7,11,24,0.55) 0%, transparent 26%),
+    linear-gradient(to top, rgba(7,11,24,0.7) 0%, transparent 45%);
 }
 
 /* ==========================================================================
@@ -419,10 +529,12 @@ body.recording #stage-wrap {
   min-height: 100dvh;
   align-items: center;
 }
+/* Keep the full 9:16 frame visible on any screen: size by whichever
+   dimension is tighter (iPhone screens are taller than 9:16, so this
+   usually means full width with small bars above and below). */
 body.recording #stage {
-  width: auto;
-  height: 100dvh;
-  max-width: 100vw;
+  width: min(100vw, calc(100dvh * 9 / 16));
+  height: auto;
   border-radius: 0;
   box-shadow: none;
 }
@@ -443,19 +555,24 @@ body.recording #stage {
 }
 body.recording #rec-controls { display: flex; }
 body.recording.playing #rec-controls { opacity: 0; }
-body.recording.playing #rec-controls:focus-within,
+/* Reveal on hover or KEYBOARD focus only (:focus-visible) — the one-button
+   playback flow parks DOM focus on the Play button, and plain :focus-within
+   would pin the bar visible through the whole recording. VoiceOver reaches
+   the buttons regardless of opacity. */
+body.recording.playing #rec-controls:has(:focus-visible),
 body.recording.playing #rec-controls:hover { opacity: 1; }
 
 /* ==========================================================================
    5. REDUCED MOTION — calm everything down if requested
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .scene-bg, .transport-glide, .cloud, .tennis-ball,
-  .deco .route-path, .deco .route-halo,
-  .scene-title, .scene-subtitle, .scene-route-label, .scene-caption span {
+  .scene-bg, .cloud, .light-sweep,
+  .deco .route-path, .route-halo, .j-route-active, .deco .ball-dot,
+  .scene-kicker, .scene-title, .scene-subtitle, .scene-route-label,
+  .scene-caption span {
     animation: none !important;
   }
-  .scene-layer { transition-duration: 0.15s; }
+  .scene-layer { transition-duration: 0.15s; transform: none; }
 }
 </style>
 </head>
@@ -469,8 +586,10 @@ body.recording.playing #rec-controls:hover { opacity: 1; }
       set timed scenes, then use recording mode and screen-record it for TikTok.</p>
   </header>
 
-  <!-- Live status region: all app feedback is announced here -->
-  <div id="status" role="status" aria-live="polite" class="editor-ui">Ready.</div>
+  <!-- Live status region: all app feedback is announced here. It stays in
+       the page during recording mode (visually hidden) so VoiceOver still
+       hears "Playback begins…" and "Episode finished." -->
+  <div id="status" role="status" aria-live="polite">Ready.</div>
 
   <!-- ===================== AUDIO CONTROLS =============================== -->
   <section class="editor-ui" aria-labelledby="audio-heading">
@@ -507,6 +626,16 @@ body.recording.playing #rec-controls:hover { opacity: 1; }
 
     <label for="series-sublabel">Series secondary label</label>
     <input type="text" id="series-sublabel">
+
+    <h3>Journey route</h3>
+    <p class="hint">One stop per line, in travel order. Format:
+      name, latitude, longitude, transport to get there — for example
+      “Dublin, 53.35, -6.26, bus”. Latitude, longitude and transport are
+      optional. The route map, moving transport icons and progress strip are
+      built from this list, and each scene’s progress is worked out
+      automatically from its location, from and to fields.</p>
+    <label for="journey-stops">Journey stops <span class="sub">(one per line)</span></label>
+    <textarea id="journey-stops" rows="4"></textarea>
 
     <h3>Save, load and share</h3>
     <p class="hint">Your project auto-saves in this browser. Export gives you a
@@ -549,6 +678,7 @@ body.recording.playing #rec-controls:hover { opacity: 1; }
         <div class="stage-chrome">
           <p class="series-label" id="stage-series-label"></p>
           <p class="series-sublabel" id="stage-series-sublabel"></p>
+          <p class="journey-strip" id="journey-strip"></p>
         </div>
         <div id="stage-progress"></div>
         <div id="countdown"></div>
@@ -556,15 +686,16 @@ body.recording.playing #rec-controls:hover { opacity: 1; }
     </div>
 
     <div class="btn-row editor-ui" style="justify-content:center; margin-top:14px;">
-      <button id="btn-enter-recording" type="button">Enter recording mode (clean full screen)</button>
+      <button id="btn-play-complete" type="button">Play complete episode for recording</button>
+      <button id="btn-enter-recording" type="button" class="secondary">Enter recording mode (clean full screen)</button>
     </div>
   </section>
 
   <!-- Floating controls shown only in recording mode.
        They fade out visually during playback so your screen recording is
        clean, but remain in the page for VoiceOver and keyboard. -->
-  <div id="rec-controls">
-    <button id="btn-rec-countdown" type="button">Play from start with 3 second countdown</button>
+  <div id="rec-controls" role="group" aria-label="Recording controls">
+    <button id="btn-rec-complete" type="button">Play complete episode</button>
     <button id="btn-rec-play" type="button" class="secondary">Play</button>
     <button id="btn-exit-recording" type="button" class="secondary">Exit recording mode</button>
   </div>
@@ -583,10 +714,21 @@ body.recording.playing #rec-controls:hover { opacity: 1; }
    Types: title | map | location | route | travel | tennis | end
    ========================================================================== */
 const SAMPLE_PROJECT = {
-  version: 1,
+  version: 2,
   title: "Episode 1 — Getting there",
   seriesLabel: "Road to Lithuania",
   seriesSublabel: "World Blind Tennis Championships",
+  // Optional year shown as a small kicker on title-type scenes.
+  seriesYear: "2026",
+  // The journey drives the progressive route map and the progress strip.
+  // Each stop: name, lat/lon (optional; auto-spread if missing), and the
+  // transport used to REACH that stop from the previous one.
+  journey: [
+    { name: "Sligo",     lat: 54.27, lon: -8.47 },
+    { name: "Dublin",    lat: 53.35, lon: -6.26, transport: "bus" },
+    { name: "Stockholm", lat: 59.33, lon: 18.07, transport: "plane" },
+    { name: "Vilnius",   lat: 54.69, lon: 25.28, transport: "plane" }
+  ],
   scenes: [
     { start: 0.0, end: 5.0, type: "title",
       title: "Road to Lithuania",
@@ -651,7 +793,16 @@ function loadProject() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      if (p && Array.isArray(p.scenes)) return p;
+      if (p && Array.isArray(p.scenes)) {
+        // Migrate projects saved before the journey map existed: give the
+        // original Lithuania episode its route data and year.
+        if (!Array.isArray(p.journey) && p.seriesLabel === "Road to Lithuania") {
+          p.journey = structuredClone(SAMPLE_PROJECT.journey);
+          if (!p.seriesYear) p.seriesYear = SAMPLE_PROJECT.seriesYear;
+          p.version = 2;
+        }
+        return p;
+      }
     }
   } catch (e) { /* corrupted storage — fall through to sample */ }
   return structuredClone(SAMPLE_PROJECT);
@@ -712,7 +863,7 @@ audio.addEventListener("pause", () => {
   $("btn-rec-play").textContent = "Play";
 });
 audio.addEventListener("ended", () => {
-  announce("Playback finished.");
+  announce("Episode finished.");
 });
 
 $("btn-play").addEventListener("click", togglePlay);
@@ -764,8 +915,12 @@ function showScene(i) {
   const scene = project.scenes[i];
   const layers = $("scene-layers");
 
-  const layer = buildSceneLayer(scene);
+  const layer = buildSceneLayer(scene, i);
   layers.appendChild(layer);
+
+  // Keep the journey progress strip in step with the scene.
+  const journey = getJourney();
+  updateJourneyStrip(journey, journey ? journeyProgress(journey, i) : null);
   // Force a reflow so the fade-in transition actually runs.
   void layer.offsetWidth;
   layer.classList.add("visible");
@@ -786,7 +941,7 @@ function showScene(i) {
 
 /** Create the DOM for one scene. Everything here is inside the aria-hidden
     stage — it is visual output only. */
-function buildSceneLayer(scene) {
+function buildSceneLayer(scene, sceneIndex) {
   const layer = document.createElement("div");
   layer.className = "scene-layer";
 
@@ -798,10 +953,37 @@ function buildSceneLayer(scene) {
   }
   layer.appendChild(bg);
 
-  if (!scene.backgroundImage) {
+  if (scene.backgroundImage) {
+    // Gradient overlay keeps titles and captions readable over photos.
+    const overlay = document.createElement("div");
+    overlay.className = "img-overlay";
+    layer.appendChild(overlay);
+  } else {
     const deco = document.createElement("div");
     deco.className = "deco";
-    deco.innerHTML = typeDecoration(scene);
+    const journey = getJourney();
+    const mapTypes = ["title", "map", "location", "route", "travel"];
+    if (journey && mapTypes.includes(scene.type)) {
+      // The progressive journey map. Title scenes get a faint, unlabelled
+      // version (a hint of the journey ahead); map scenes get full labels.
+      const progress = journeyProgress(journey, sceneIndex ?? currentSceneIndex);
+      deco.innerHTML = journeyMapSVG(journey, {
+        reached: scene.type === "title" ? -1 : progress.reached,
+        active: scene.type === "title" ? -1 : progress.active,
+        transport: progress.transport,
+        showLabels: scene.type !== "title",
+        faint: scene.type === "title"
+      });
+      if (scene.type === "travel") deco.innerHTML += typeDecoration(scene);
+    } else {
+      deco.innerHTML = typeDecoration(scene);
+    }
+    // Gentle light sweep gives title and end cards cinematic movement.
+    if (scene.type === "title" || scene.type === "end") {
+      const sweep = document.createElement("div");
+      sweep.className = "light-sweep";
+      deco.appendChild(sweep);
+    }
     layer.appendChild(deco);
   }
 
@@ -813,6 +995,12 @@ function buildSceneLayer(scene) {
   // --- Text block --------------------------------------------------------
   const text = document.createElement("div");
   text.className = "scene-text";
+  if (scene.type === "title" && project.seriesYear) {
+    const kick = document.createElement("p");
+    kick.className = "scene-kicker";
+    kick.textContent = project.seriesYear;
+    text.appendChild(kick);
+  }
   if (scene.title) {
     const h = document.createElement("p");
     h.className = "scene-title";
@@ -856,57 +1044,267 @@ function typeBgClass(type) {
 }
 
 /** Decorative art per scene type (returned as an HTML string).
-    Deliberately suggestive rather than geographically accurate. */
+    These are the FALLBACKS used when no journey data exists; scenes that can
+    show the journey map get it from journeyMapSVG() instead. */
 function typeDecoration(scene) {
   switch (scene.type) {
     case "map":
-      // A stylised dotted journey line with glowing stop dots.
       return `
         <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
-          <path class="route-path" d="M 12 150 C 30 120, 20 95, 45 85 S 80 55, 88 28"/>
-          <circle class="route-dot" cx="12" cy="150" r="3.2"/>
-          <circle class="route-dot" cx="45" cy="85"  r="2.6"/>
-          <circle class="route-dot" cx="70" cy="60"  r="2.6"/>
-          <circle class="route-dot" cx="88" cy="28"  r="3.6"/>
-          <circle class="route-halo" cx="88" cy="28" r="7"/>
+          <path class="route-path" d="M 12 140 C 30 120, 40 115, 55 108 S 80 95, 88 82"/>
+          <circle class="route-dot" cx="12" cy="140" r="1.8"/>
+          <circle class="route-dot" cx="88" cy="82"  r="2.2"/>
+          <circle class="route-halo" cx="88" cy="82" r="5"/>
         </svg>`;
-    case "route": {
-      const icon = (scene.transport || "").toLowerCase().includes("bus") ? "🚌" : "✈️";
+    case "route":
       return `
         <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
-          <path class="route-path" d="M -5 60 C 25 50, 75 70, 105 55"/>
-        </svg>
-        <div class="transport-glide">${icon}</div>`;
-    }
+          <path class="route-path" d="M -5 118 C 25 110, 75 122, 105 112"/>
+        </svg>`;
     case "travel":
       return `
         <div class="cloud" style="top:14%; animation-delay:0s;"></div>
-        <div class="cloud" style="top:30%; animation-delay:-9s; width:55%;"></div>
-        <div class="cloud" style="top:68%; animation-delay:-17s;"></div>`;
+        <div class="cloud" style="top:26%; animation-delay:-11s; width:55%;"></div>
+        <div class="cloud" style="top:70%; animation-delay:-21s;"></div>`;
     case "location":
       return `
         <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
-          <circle class="route-halo" cx="50" cy="120" r="10"/>
-          <circle class="route-halo" cx="50" cy="120" r="18" style="animation-delay:1.2s"/>
-          <circle class="route-dot"  cx="50" cy="120" r="4"/>
+          <circle class="route-halo" cx="50" cy="120" r="6"/>
+          <circle class="route-halo" cx="50" cy="120" r="11" style="animation-delay:1.2s"/>
+          <circle class="route-dot"  cx="50" cy="120" r="2.4"/>
         </svg>`;
     case "tennis":
-      // Minimal court markings plus a bouncing ball.
+      // Quiet court markings low in the frame plus a small floating ball —
+      // a tennis accent on the same navy series identity, not a new template.
       return `
         <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
-          <rect class="court-line" x="14" y="95" width="72" height="70" rx="1"/>
-          <line class="court-line" x1="14" y1="130" x2="86" y2="130"/>
-          <line class="court-line" x1="50" y1="95" x2="50" y2="165"/>
-        </svg>
-        <div class="tennis-ball" style="left:64%; top:38%;"></div>`;
+          <g opacity="0.4">
+            <rect class="court-line" x="18" y="116" width="64" height="48" rx="1"/>
+            <line class="court-line" x1="18" y1="140" x2="82" y2="140"/>
+            <line class="court-line" x1="34" y1="116" x2="34" y2="164"/>
+            <line class="court-line" x1="66" y1="116" x2="66" y2="164"/>
+          </g>
+          <circle class="ball-dot" cx="74" cy="28" r="2"/>
+        </svg>`;
     case "end":
       return `
         <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
-          <circle class="route-halo" cx="50" cy="89" r="26" style="animation-duration:4s"/>
+          <circle class="route-halo" cx="50" cy="86" r="26" style="animation-duration:4s"/>
         </svg>`;
     default: // "title" and anything unknown
       return "";
   }
+}
+
+/* ==========================================================================
+   4b. JOURNEY ENGINE — the progressively-revealed route map
+   The project's `journey` list of stops drives:
+     - a stylised map with believable geography (stops placed by lat/lon),
+     - faint coastline sketches when the stops sit in the NW-Europe window,
+     - gold route legs that fill in as the episode reaches each stop,
+     - an animated current leg with a moving bus/plane silhouette,
+     - the small progress strip at the top of the frame.
+   Which stop has been "reached" is inferred from each scene's location,
+   from and to fields — no extra per-scene configuration needed.
+   ========================================================================== */
+
+/** Very rough decorative coastline sketches, as [lat, lon] outlines.
+    Projected through the same transform as the stops, so they line up with
+    the route when the journey is in this part of Europe, and simply fall
+    off-screen for journeys elsewhere. */
+const COASTLINES = [
+  // Ireland
+  [[55.4,-7.4],[55.0,-6.0],[53.9,-6.1],[52.2,-6.4],[51.5,-9.6],[53.0,-10.1],[54.3,-10.0]],
+  // Great Britain
+  [[58.6,-5.0],[58.6,-3.0],[57.5,-1.8],[54.5,-0.4],[52.9,1.7],[51.1,1.4],[50.7,-2.5],
+   [50.1,-5.6],[51.6,-4.8],[53.2,-4.6],[54.6,-3.6],[55.3,-5.5],[56.7,-6.1]],
+  // Denmark
+  [[57.7,10.6],[56.5,10.9],[55.3,9.9],[55.5,8.2],[57.1,8.6]],
+  // Norway + Sweden
+  [[62.0,5.2],[58.9,5.5],[58.0,7.5],[59.1,10.6],[58.3,11.2],[57.5,11.9],[56.0,12.7],
+   [55.4,13.0],[55.7,14.2],[56.1,15.6],[57.7,16.7],[58.7,17.2],[59.3,18.1],[60.6,18.6],[62.0,17.5]],
+  // Finland (southern coast)
+  [[62.0,21.3],[60.4,21.4],[60.2,24.9],[60.5,27.7],[62.0,28.5]],
+  // Baltic south + east coast (Germany → Poland → Baltics), closed far south
+  [[54.1,10.9],[54.4,12.6],[53.9,14.2],[54.5,16.5],[54.8,18.3],[54.4,19.5],[54.9,20.5],
+   [55.3,21.1],[56.5,21.0],[57.4,21.7],[57.8,22.6],[57.1,23.3],[57.0,24.1],[57.9,24.4],
+   [58.9,23.5],[59.0,24.1],[59.4,24.8],[59.5,26.6],[59.3,28.2],[48.0,28.2],[48.0,10.9]]
+];
+
+/* Small transport silhouettes (drawn pointing right, ~5 units long). */
+const TRANSPORT_GLYPHS = {
+  plane: "M2.6 0 L0.9 0.4 L-0.4 1.6 L-0.9 1.5 L-0.1 0.35 L-1.6 0.5 L-2.2 1.1 L-2.6 1 L-2.3 0 L-2.6 -1 L-2.2 -1.1 L-1.6 -0.5 L-0.1 -0.35 L-0.9 -1.5 L-0.4 -1.6 L0.9 -0.4 Z",
+  bus:   "M-2.4 -1 L2.4 -1 L2.4 0.7 L1.9 0.7 A0.6 0.6 0 0 1 0.8 0.7 L-0.8 0.7 A0.6 0.6 0 0 1 -1.9 0.7 L-2.4 0.7 Z M-2 -0.7 L-0.9 -0.7 L-0.9 0 L-2 0 Z M-0.5 -0.7 L0.6 -0.7 L0.6 0 L-0.5 0 Z M1 -0.7 L2 -0.7 L2 0 L1 0 Z"
+};
+
+/** The project's usable journey stops (needs at least 2 named stops). */
+function getJourney() {
+  const j = Array.isArray(project.journey) ? project.journey.filter(s => s && s.name) : [];
+  return j.length >= 2 ? j : null;
+}
+
+/** Highest journey-stop index mentioned in a text value, or -1. */
+function stopMatchIdx(journey, text) {
+  if (!text) return -1;
+  const t = String(text).toLowerCase();
+  let best = -1;
+  journey.forEach((s, idx) => {
+    if (t.includes(s.name.toLowerCase())) best = idx;
+  });
+  return best;
+}
+
+/** Journey progress at scene [i]:
+      reached  — index of the furthest stop arrived at so far
+      active   — index of the stop currently being travelled TO (or -1)
+      transport— how the active leg is being travelled */
+function journeyProgress(journey, i) {
+  let reached = -1;
+  for (let j = 0; j <= i; j++) {
+    const s = project.scenes[j];
+    reached = Math.max(reached,
+      stopMatchIdx(journey, s.location),
+      stopMatchIdx(journey, s.from),
+      j < i ? stopMatchIdx(journey, s.to) : -1);
+  }
+  const cur = project.scenes[i];
+  const toIdx = stopMatchIdx(journey, cur.to);
+  let active = -1, transport = "";
+  if (toIdx > reached && (cur.type === "route" || cur.type === "travel")) {
+    active = toIdx;
+    transport = (cur.transport || journey[toIdx].transport || "plane").toLowerCase();
+  } else {
+    reached = Math.max(reached, toIdx);
+  }
+  return { reached, active, transport };
+}
+
+/** Project journey stops (and coastlines) into stage coordinates.
+    Uses a simple equirectangular projection with a uniform scale so the
+    geography stays believable; journeys without lat/lon are spread along a
+    gentle arc instead. Returns {pts, project} or {pts, project:null}. */
+function journeyLayout(journey) {
+  const MAP_CY = 112;          // vertical centre of the map band in the frame
+  const hasCoords = journey.every(s => isFinite(s.lat) && isFinite(s.lon));
+  if (!hasCoords) {
+    const pts = journey.map((s, i) => {
+      const t = journey.length > 1 ? i / (journey.length - 1) : 0.5;
+      return { x: 14 + t * 72, y: MAP_CY + 4 - Math.sin(t * Math.PI) * 16 };
+    });
+    return { pts, project: null };
+  }
+  const lats = journey.map(s => s.lat), lons = journey.map(s => s.lon);
+  const midLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const k = Math.cos(midLat * Math.PI / 180);   // shrink longitude degrees
+  const xs = lons.map(l => l * k);
+  const spanX = Math.max(...xs) - Math.min(...xs) || 1;
+  const spanY = Math.max(...lats) - Math.min(...lats) || 1;
+  // Fit within an 80-unit-wide, 44-unit-tall band, uniform scale.
+  const scale = Math.min(80 / spanX, 44 / spanY);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const proj = (lat, lon) => ({
+    x: 50 + (lon * k - cx) * scale,
+    y: MAP_CY + (midLat - lat) * scale
+  });
+  return { pts: journey.map(s => proj(s.lat, s.lon)), project: proj };
+}
+
+/** SVG path for one leg, gently bowed like a flight-path arc. */
+function legPath(a, b) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const bow = Math.min(len * 0.16, 6);
+  // Perpendicular offset, always bowing towards the top of the frame.
+  let nx = -dy / len, ny = dx / len;
+  if (ny > 0) { nx = -nx; ny = -ny; }
+  return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} Q ${(mx + nx * bow).toFixed(1)} ${(my + ny * bow).toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+}
+
+/** Build the full journey-map SVG for a scene.
+    opts: { reached, active, transport, showLabels, faint } */
+function journeyMapSVG(journey, opts) {
+  const { pts, project: proj } = journeyLayout(journey);
+  const parts = [];
+
+  // Coastline sketches (only meaningful when real coordinates exist).
+  if (proj) {
+    COASTLINES.forEach(line => {
+      const d = line.map((p, i) => {
+        const q = proj(p[0], p[1]);
+        return (i ? "L" : "M") + q.x.toFixed(1) + " " + q.y.toFixed(1);
+      }).join(" ") + " Z";
+      parts.push(`<path class="j-coast" d="${d}"/>`);
+    });
+  }
+
+  // Full route, faint — the journey always reads as one continuous line.
+  const allLegs = pts.slice(1).map((p, i) => legPath(pts[i], p));
+  parts.push(`<path class="j-route-all" d="${allLegs.join(" ")}"/>`);
+
+  // Completed legs in gold.
+  const doneUpTo = Math.min(opts.reached, pts.length - 1);
+  if (doneUpTo > 0) {
+    parts.push(`<path class="j-route-done" d="${allLegs.slice(0, doneUpTo).join(" ")}"/>`);
+  }
+
+  // Active leg: animated dashes + a moving transport silhouette.
+  if (opts.active > 0) {
+    const d = allLegs[opts.active - 1];
+    parts.push(`<path class="j-route-active" d="${d}"/>`);
+    const glyph = TRANSPORT_GLYPHS[(opts.transport || "").includes("bus") ? "bus" : "plane"];
+    parts.push(
+      `<g class="j-transport"><path d="${glyph}" transform="scale(1.4)"/>` +
+      `<animateMotion dur="7s" repeatCount="indefinite" rotate="auto" path="${d}"/></g>`);
+    // Pulse on the destination.
+    const t = pts[opts.active];
+    parts.push(`<circle class="route-halo" cx="${t.x.toFixed(1)}" cy="${t.y.toFixed(1)}" r="5"/>`);
+  }
+
+  // Stops and labels. Labels alternate above/below their dot to avoid
+  // collisions between nearby cities (e.g. Sligo and Dublin).
+  pts.forEach((p, i) => {
+    const isReached = i <= opts.reached;
+    parts.push(`<circle class="j-stop${isReached ? " reached" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isReached ? 1.7 : 1.3}"/>`);
+    if (opts.showLabels) {
+      const dy = (i % 2 === 0) ? -3.4 : 5.6;
+      const lx = Math.min(Math.max(p.x, 10), 90);
+      parts.push(`<text class="j-label${isReached ? " reached" : ""}" x="${lx.toFixed(1)}" y="${(p.y + dy).toFixed(1)}">${escapeXML(journey[i].name.toUpperCase())}</text>`);
+    }
+  });
+
+  // Extra pulse on the current location for location scenes.
+  if (opts.active <= 0 && opts.reached >= 0 && opts.reached < pts.length) {
+    const p = pts[opts.reached];
+    parts.push(`<circle class="route-halo" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5"/>`);
+  }
+
+  const op = opts.faint ? ' opacity="0.45"' : "";
+  return `<svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice"${op}>${parts.join("")}</svg>`;
+}
+
+function escapeXML(s) {
+  return String(s).replace(/[<>&"']/g, c =>
+    ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/** Update the small progress strip at the top of the frame. */
+function updateJourneyStrip(journey, progress) {
+  const strip = $("journey-strip");
+  strip.textContent = "";
+  if (!journey) return;
+  journey.forEach((s, i) => {
+    if (i) {
+      const sep = document.createElement("span");
+      sep.className = "sep";
+      sep.textContent = "•";
+      strip.appendChild(sep);
+    }
+    const span = document.createElement("span");
+    if (i <= progress.reached) span.className = "reached";
+    span.textContent = s.name;
+    strip.appendChild(span);
+  });
 }
 
 /** Re-render the stage chrome (series labels) and current scene. */
@@ -923,11 +1321,19 @@ function refreshStage() {
    ========================================================================== */
 
 /** (Re)build all scene cards. Called after structural changes
-    (add / remove / move / duplicate / import / reset). */
+    (add / remove / move / duplicate / import / reset).
+    Cards are collapsed <details> groups so a closed scene is a single
+    VoiceOver stop; open/closed state is preserved across re-renders. */
 function renderSceneEditor() {
   const list = $("scene-list");
+  const openSet = new Set(
+    [...list.querySelectorAll("details[open]")].map(d => Number(d.dataset.index)));
   list.innerHTML = "";
-  project.scenes.forEach((scene, i) => list.appendChild(buildSceneCard(scene, i)));
+  project.scenes.forEach((scene, i) => {
+    const card = buildSceneCard(scene, i);
+    if (openSet.has(i)) card.open = true;
+    list.appendChild(card);
+  });
 }
 
 /** One labelled input bound to a scene field. */
@@ -961,9 +1367,9 @@ function field(scene, i, key, labelText, opts = {}) {
   input.addEventListener("change", () => {
     scene[key] = (opts.type === "number") ? (parseFloat(input.value) || 0) : input.value;
     scheduleSave();
-    // Refresh the card's legend and the stage so edits are visible at once.
-    const card = input.closest("fieldset");
-    if (card) card.querySelector("legend").textContent = legendText(scene, i);
+    // Refresh the card's summary and the stage so edits are visible at once.
+    const card = input.closest("details");
+    if (card) card.querySelector("summary").textContent = legendText(scene, i);
     refreshStage();
   });
 
@@ -976,13 +1382,18 @@ function legendText(scene, i) {
          " (" + scene.start + "–" + scene.end + " seconds)";
 }
 
-/** Build the full editor card for one scene. */
+/** Build the full editor card for one scene: a collapsible <details> group
+    whose summary names the scene, its title and its time range. */
 function buildSceneCard(scene, i) {
-  const card = document.createElement("fieldset");
-  card.className = "scene-card";
-  const legend = document.createElement("legend");
-  legend.textContent = legendText(scene, i);
-  card.appendChild(legend);
+  const outer = document.createElement("details");
+  outer.className = "scene-card";
+  outer.dataset.index = i;
+  const summary = document.createElement("summary");
+  summary.textContent = legendText(scene, i);
+  outer.appendChild(summary);
+  const card = document.createElement("div");
+  card.className = "card-body";
+  outer.appendChild(card);
 
   const grid = document.createElement("div");
   grid.className = "field-grid";
@@ -1061,7 +1472,7 @@ function buildSceneCard(scene, i) {
     btn.setAttribute("aria-label", btn.textContent + ", scene " + (i + 1)));
   card.appendChild(actions);
 
-  return card;
+  return outer;
 }
 
 function sceneButton(text, cls, onClick) {
@@ -1099,6 +1510,9 @@ $("btn-add-scene").addEventListener("click", () => {
     title: "New scene", subtitle: "", caption: ""
   });
   afterStructuralChange("New scene added at the end, starting at " + start + " seconds. It is scene " + project.scenes.length + ".");
+  // Open the new card so its fields are immediately reachable.
+  const cards = $("scene-list").children;
+  if (cards.length) cards[cards.length - 1].open = true;
 });
 
 /* ==========================================================================
@@ -1116,6 +1530,41 @@ PROJECT_FIELDS.forEach(([inputId, key]) => {
     scheduleSave();
     refreshStage();
   });
+});
+
+/* Journey stops textarea: "name, lat, lon, transport" per line, with lat,
+   lon and transport all optional. Serialised back the same way. */
+function journeyToText(journey) {
+  return (journey || []).map(s => {
+    const bits = [s.name];
+    if (isFinite(s.lat) && isFinite(s.lon)) bits.push(s.lat, s.lon);
+    if (s.transport) {
+      if (bits.length === 1) bits.push("", "");   // keep transport in column 4
+      bits.push(s.transport);
+    }
+    return bits.join(", ");
+  }).join("\n");
+}
+
+function parseJourneyText(text) {
+  return text.split("\n").map(line => {
+    const parts = line.split(",").map(p => p.trim());
+    if (!parts[0]) return null;
+    const stop = { name: parts[0] };
+    const lat = parseFloat(parts[1]), lon = parseFloat(parts[2]);
+    if (isFinite(lat) && isFinite(lon)) { stop.lat = lat; stop.lon = lon; }
+    if (parts[3]) stop.transport = parts[3];
+    return stop;
+  }).filter(Boolean);
+}
+
+$("journey-stops").addEventListener("change", () => {
+  project.journey = parseJourneyText($("journey-stops").value);
+  scheduleSave();
+  refreshStage();
+  announce(project.journey.length >= 2
+    ? "Journey updated: " + project.journey.map(s => s.name).join(", ") + "."
+    : "Journey cleared — add at least two stops to show the route map.");
 });
 
 $("btn-export").addEventListener("click", () => {
@@ -1165,7 +1614,7 @@ function enterRecording() {
   document.body.classList.add("recording");
   window.scrollTo(0, 0);
   announce("Recording mode on. The screen shows only the video canvas. The three control buttons fade out while audio plays but VoiceOver can still reach them. Press Escape or the Exit button to leave.");
-  $("btn-rec-countdown").focus();
+  $("btn-rec-complete").focus();
 }
 
 function exitRecording() {
@@ -1178,34 +1627,53 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && document.body.classList.contains("recording")) exitRecording();
 });
 
-/* Play-from-start with a short visual countdown, so you have time to start
-   the iPhone screen recording before the video begins. */
-$("btn-rec-countdown").addEventListener("click", () => {
-  if (!audio.src) { announce("Choose an audio file first, in the editor."); return; }
-  audio.pause();
-  audio.currentTime = 0;
-  let n = 3;
+/* One-button complete playback: reset to the start, switch to the clean
+   presentation, count down three seconds (time to start the iPhone screen
+   recording), then play the whole episode hands-free. Scene changes happen
+   visually only — no VoiceOver announcements until "Episode finished." */
+let countdownTimer = null;
+function runCountdown(seconds, done) {
+  clearInterval(countdownTimer);
   const cd = $("countdown");
+  let n = seconds;
   cd.textContent = n;
   cd.classList.add("on");
-  announce("Playing from the start in 3 seconds.");
-  const tick = setInterval(() => {
+  countdownTimer = setInterval(() => {
     n -= 1;
     if (n > 0) { cd.textContent = n; }
     else {
-      clearInterval(tick);
+      clearInterval(countdownTimer);
       cd.classList.remove("on");
       cd.textContent = "";
-      audio.play();
+      done();
     }
   }, 1000);
-});
+}
+
+function playCompleteEpisode() {
+  if (!audio.src) { announce("Choose an audio file first, in the Audio section."); return; }
+  audio.pause();
+  audio.currentTime = 0;
+  currentSceneIndex = -1;
+  if (project.scenes.length) showScene(0);      // scene 1 ready behind the countdown
+  if (!document.body.classList.contains("recording")) {
+    document.body.classList.add("recording");
+    window.scrollTo(0, 0);
+    $("btn-rec-play").focus();                   // one focus move, then hands-off
+  }
+  announce("Playback begins in three seconds.");
+  runCountdown(3, () => audio.play());
+}
+
+$("btn-play-complete").addEventListener("click", playCompleteEpisode);
+$("btn-rec-complete").addEventListener("click", playCompleteEpisode);
 
 /* ==========================================================================
    8. INIT
    ========================================================================== */
 function initProjectUI() {
   PROJECT_FIELDS.forEach(([inputId, key]) => { $(inputId).value = project[key] || ""; });
+  $("journey-stops").value = journeyToText(project.journey);
   renderSceneEditor();
   currentSceneIndex = -1;
   refreshStage();
