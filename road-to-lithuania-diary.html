@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Road to Lithuania TikTok Diary Maker</title>
+<!--
+  ============================================================================
+  ROAD TO LITHUANIA — TikTok Audio Diary Maker
+  ============================================================================
+  A single-file, dependency-free, accessible web app for building vertical
+  9:16 audio-diary videos. You supply:
+    1. an audio recording,
+    2. a list of timed scenes (start / end / title / subtitle / caption ...),
+    3. optional background images per scene,
+  and the app plays the audio while switching stylish visuals in sync.
+  Use "Recording mode" to get a clean full-screen presentation you can
+  screen-record on iPhone for TikTok.
+
+  Everything is saved to localStorage automatically (except the audio file
+  itself, which browsers cannot persist — re-choose it when you come back).
+
+  To reuse for a future episode: edit the scenes in the editor, or use
+  Export / Import JSON, or press "Reset to sample project" and start fresh.
+
+  Code layout (search for the banner comments below):
+    - CSS: page styles, then stage (9:16 canvas) styles, then scene-type art
+    - JS : sample data → state & persistence → audio → stage rendering →
+           scene editor → project tools → recording mode → init
+  ============================================================================
+-->
+<style>
+/* ==========================================================================
+   1. BASE PAGE STYLES
+   ========================================================================== */
+:root {
+  --bg: #0e1220;
+  --panel: #181d31;
+  --panel-2: #1f2540;
+  --text: #f2f4fb;
+  --text-dim: #b8bfd6;
+  --accent: #ffd34d;      /* series gold */
+  --accent-2: #4dd0a5;    /* Lithuanian-flag green nod */
+  --danger: #ff7a7a;
+  --radius: 14px;
+  --focus: 3px solid #8ab4ff;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 17px;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 80px;
+}
+
+h1 {
+  font-size: 1.7rem;
+  line-height: 1.25;
+  margin: 8px 0 4px;
+}
+.tagline { color: var(--text-dim); margin: 0 0 20px; }
+
+h2 {
+  font-size: 1.25rem;
+  margin: 28px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--panel-2);
+}
+h3 { font-size: 1.05rem; margin: 14px 0 8px; }
+
+section {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 14px 16px 18px;
+  margin-bottom: 18px;
+}
+
+p.hint { color: var(--text-dim); font-size: 0.95rem; margin: 6px 0 10px; }
+
+/* --- Form controls: big targets, clear labels, visible focus ------------- */
+label { display: block; font-weight: 600; margin: 10px 0 4px; }
+label .sub { font-weight: 400; color: var(--text-dim); }
+
+input[type="text"], input[type="number"], input[type="url"],
+select, textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid #3a4266;
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+textarea { resize: vertical; }
+
+input[type="file"] { color: var(--text); padding: 8px 0; max-width: 100%; }
+
+button {
+  font: inherit;
+  font-weight: 600;
+  color: #101425;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid #3a4266; }
+button.danger { background: var(--danger); color: #2a0f0f; }
+button:disabled { opacity: 0.5; cursor: default; }
+
+:is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--focus);
+  outline-offset: 2px;
+}
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+
+/* --- Status live region -------------------------------------------------- */
+#status {
+  background: var(--panel-2);
+  border-left: 4px solid var(--accent-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  min-height: 44px;
+}
+
+/* --- Scene editor cards -------------------------------------------------- */
+fieldset.scene-card {
+  border: 1px solid #3a4266;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  margin: 0 0 16px;
+  padding: 6px 14px 14px;
+}
+fieldset.scene-card legend {
+  font-weight: 700;
+  padding: 0 8px;
+  background: var(--panel);
+  border-radius: 8px;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+@media (max-width: 520px) { .field-grid { grid-template-columns: 1fr; } }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ==========================================================================
+   2. STAGE — the vertical 9:16 canvas
+   ========================================================================== */
+#stage-wrap { display: flex; justify-content: center; }
+
+#stage {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  width: min(100%, 380px);
+  background: #05070f;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+}
+
+/* Scene layers stack and crossfade */
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.scene-layer.visible { opacity: 1; }
+
+/* Slow "Ken Burns" drift on scene backgrounds */
+.scene-bg {
+  position: absolute;
+  inset: -6%;
+  background-size: cover;
+  background-position: center;
+  animation: kenburns 22s ease-in-out infinite alternate;
+}
+@keyframes kenburns {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.08) translate(1.5%, -1.5%); }
+}
+
+/* Series identity chrome (always on top of scenes) */
+.stage-chrome {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  pointer-events: none;
+  z-index: 5;
+}
+.series-label {
+  margin: 8% 0 0;
+  text-align: center;
+  font-size: clamp(12px, 3.4cqw, 16px);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+}
+.series-sublabel {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: clamp(10px, 2.6cqw, 13px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+
+/* Scene text block */
+.scene-text {
+  position: absolute;
+  left: 7%; right: 7%;
+  top: 38%;
+  text-align: center;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.65);
+}
+.scene-title {
+  font-size: clamp(26px, 9cqw, 44px);
+  font-weight: 800;
+  line-height: 1.12;
+  margin: 0;
+  animation: rise-in 0.9s ease both;
+}
+.scene-subtitle {
+  font-size: clamp(15px, 4.6cqw, 22px);
+  font-weight: 500;
+  color: rgba(255,255,255,0.92);
+  margin: 10px 0 0;
+  animation: rise-in 0.9s 0.15s ease both;
+}
+.scene-route-label {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.35);
+  font-size: clamp(13px, 3.8cqw, 17px);
+  animation: rise-in 0.9s 0.3s ease both;
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Caption pill near the bottom */
+.scene-caption {
+  position: absolute;
+  left: 6%; right: 6%;
+  bottom: 10%;
+  text-align: center;
+}
+.scene-caption span {
+  display: inline-block;
+  background: rgba(5, 8, 18, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: clamp(13px, 4cqw, 17px);
+  line-height: 1.45;
+  animation: rise-in 0.9s 0.25s ease both;
+}
+
+/* Thin progress bar along the very bottom of the stage (decorative) */
+#stage-progress {
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 5px;
+  width: 0%;
+  background: var(--accent);
+  z-index: 6;
+}
+
+/* Countdown overlay for recording mode */
+#countdown {
+  position: absolute; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(5,8,18,0.55);
+  z-index: 8;
+  font-size: 120px;
+  font-weight: 800;
+  color: var(--accent);
+  text-shadow: 0 4px 30px rgba(0,0,0,0.8);
+}
+#countdown.on { display: flex; }
+
+/* Container queries so stage text scales with stage width */
+#stage { container-type: size; }
+
+/* ==========================================================================
+   3. GENERATED SCENE-TYPE BACKGROUNDS (used when no image supplied)
+   ========================================================================== */
+.bg-title    { background: linear-gradient(160deg, #1b2a6b 0%, #4527a0 55%, #0d1333 100%); }
+.bg-map      { background: linear-gradient(165deg, #0b2b3d 0%, #123a2e 60%, #081726 100%); }
+.bg-location { background: linear-gradient(160deg, #7b2d55 0%, #b3452e 60%, #2a0f2e 100%); }
+.bg-route    { background: linear-gradient(160deg, #14477a 0%, #1a6f8f 55%, #0b1c3a 100%); }
+.bg-travel   { background: linear-gradient(170deg, #2a6fb0 0%, #7fb6e0 70%, #d8ecff 100%); }
+.bg-tennis   { background: linear-gradient(160deg, #14532d 0%, #1d7a3f 55%, #062812 100%); }
+.bg-end      { background: linear-gradient(160deg, #101010 0%, #3d2f00 60%, #000 100%); }
+
+/* Decorative art inside generated backgrounds (all aria-hidden) */
+.deco { position: absolute; inset: 0; overflow: hidden; }
+.deco svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Dashed route line animation (map & route scenes).
+   non-scaling-stroke keeps lines crisp when the SVG scales to the stage. */
+.deco .route-path {
+  fill: none;
+  stroke: rgba(255,255,255,0.85);
+  stroke-width: 3;
+  stroke-dasharray: 10 12;
+  vector-effect: non-scaling-stroke;
+  animation: dash-move 3s linear infinite;
+}
+@keyframes dash-move { to { stroke-dashoffset: -44; } }
+
+.deco .route-dot { fill: var(--accent); }
+.deco .route-halo {
+  fill: none; stroke: var(--accent); stroke-width: 2;
+  animation: halo 2.5s ease-out infinite;
+  transform-origin: center;
+}
+@keyframes halo {
+  0%   { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* Transport emoji gliding across route scenes */
+.transport-glide {
+  position: absolute;
+  top: 30%;
+  left: -15%;
+  font-size: clamp(40px, 14cqw, 64px);
+  animation: glide 9s linear infinite;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+@keyframes glide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(160cqw); }
+}
+
+/* Drifting clouds on travel scenes */
+.cloud {
+  position: absolute;
+  width: 42%; height: 10%;
+  background: rgba(255,255,255,0.5);
+  border-radius: 999px;
+  filter: blur(10px);
+  animation: cloud-drift 26s linear infinite;
+}
+@keyframes cloud-drift {
+  from { transform: translateX(-60cqw); }
+  to   { transform: translateX(160cqw); }
+}
+
+/* Tennis court lines */
+.deco .court-line {
+  stroke: rgba(255,255,255,0.75);
+  stroke-width: 2.5;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.tennis-ball {
+  position: absolute;
+  width: 12cqw; height: 12cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f4ff6e, #cddc39);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  animation: ball-bounce 2.4s ease-in-out infinite alternate;
+}
+@keyframes ball-bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-9cqh); }
+}
+
+/* Soft vignette on every generated background for text legibility */
+.vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center 45%, transparent 40%, rgba(0,0,0,0.55) 100%);
+}
+
+/* ==========================================================================
+   4. RECORDING MODE — clean full-screen presentation
+   ========================================================================== */
+body.recording { background: #000; }
+body.recording .editor-ui { display: none; }
+body.recording main { max-width: none; padding: 0; }
+body.recording #preview-section {
+  background: transparent; padding: 0; margin: 0; border-radius: 0;
+}
+body.recording #stage-wrap {
+  min-height: 100dvh;
+  align-items: center;
+}
+body.recording #stage {
+  width: auto;
+  height: 100dvh;
+  max-width: 100vw;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Recording control bar: fades away while audio plays so your screen
+   recording stays clean, but stays reachable (focus brings it back). */
+#rec-controls {
+  display: none;
+  position: fixed;
+  left: 50%; bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 20;
+  gap: 10px;
+  background: rgba(10,13,26,0.85);
+  padding: 10px;
+  border-radius: 16px;
+  transition: opacity 0.6s ease;
+}
+body.recording #rec-controls { display: flex; }
+body.recording.playing #rec-controls { opacity: 0; }
+body.recording.playing #rec-controls:focus-within,
+body.recording.playing #rec-controls:hover { opacity: 1; }
+
+/* ==========================================================================
+   5. REDUCED MOTION — calm everything down if requested
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .scene-bg, .transport-glide, .cloud, .tennis-ball,
+  .deco .route-path, .deco .route-halo,
+  .scene-title, .scene-subtitle, .scene-route-label, .scene-caption span {
+    animation: none !important;
+  }
+  .scene-layer { transition-duration: 0.15s; }
+}
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ===================== HEADER (hidden in recording mode) ============ -->
+  <header class="editor-ui">
+    <h1>Road to Lithuania — TikTok Diary Maker</h1>
+    <p class="tagline">Build a vertical 9:16 audio-diary video: load your audio,
+      set timed scenes, then use recording mode and screen-record it for TikTok.</p>
+  </header>
+
+  <!-- Live status region: all app feedback is announced here -->
+  <div id="status" role="status" aria-live="polite" class="editor-ui">Ready.</div>
+
+  <!-- ===================== AUDIO CONTROLS =============================== -->
+  <section class="editor-ui" aria-labelledby="audio-heading">
+    <h2 id="audio-heading">Audio</h2>
+    <p class="hint">Choose your recorded audio update. The audio itself cannot be
+      saved between visits, so re-choose the file when you come back — your
+      scenes are always saved.</p>
+
+    <label for="audio-file">Audio file</label>
+    <input type="file" id="audio-file" accept="audio/*">
+
+    <div class="btn-row">
+      <button id="btn-play" type="button">Play</button>
+      <button id="btn-restart" type="button" class="secondary">Restart from beginning</button>
+    </div>
+
+    <label for="seek">Seek position <span class="sub">(slider, in seconds)</span></label>
+    <input type="range" id="seek" min="0" max="0" step="0.1" value="0"
+           aria-valuetext="0 seconds">
+
+    <p id="time-readout" aria-hidden="true">0:00 / 0:00</p>
+    <p id="scene-indicator">No scene playing.</p>
+  </section>
+
+  <!-- ===================== PROJECT CONTROLS ============================= -->
+  <section class="editor-ui" aria-labelledby="project-heading">
+    <h2 id="project-heading">Project</h2>
+
+    <label for="project-title">Episode title <span class="sub">(for your own reference)</span></label>
+    <input type="text" id="project-title">
+
+    <label for="series-label">Series label <span class="sub">(small text at top of video)</span></label>
+    <input type="text" id="series-label">
+
+    <label for="series-sublabel">Series secondary label</label>
+    <input type="text" id="series-sublabel">
+
+    <h3>Save, load and share</h3>
+    <p class="hint">Your project auto-saves in this browser. Export gives you a
+      JSON file you can keep or reuse as a template for the next episode.</p>
+    <div class="btn-row">
+      <button id="btn-export" type="button" class="secondary">Export project as JSON file</button>
+      <button id="btn-import" type="button" class="secondary">Import project from JSON file</button>
+      <input type="file" id="import-file" accept=".json,application/json" class="sr-only"
+             aria-label="Choose a project JSON file to import">
+      <button id="btn-reset" type="button" class="danger">Reset to sample project</button>
+    </div>
+  </section>
+
+  <!-- ===================== SCENE EDITOR ================================= -->
+  <section class="editor-ui" aria-labelledby="scenes-heading">
+    <h2 id="scenes-heading">Scenes</h2>
+    <p class="hint">Each scene has a start and end time in seconds (decimals
+      allowed, e.g. 14.7). While the audio plays, the matching scene is shown
+      automatically. Use “Preview this scene” to jump the audio to a scene.</p>
+
+    <div class="btn-row">
+      <button id="btn-add-scene" type="button">Add new scene at end</button>
+    </div>
+
+    <!-- Scene cards are generated here by JavaScript -->
+    <div id="scene-list"></div>
+  </section>
+
+  <!-- ===================== PREVIEW / STAGE ============================== -->
+  <section id="preview-section" aria-labelledby="preview-heading">
+    <h2 id="preview-heading" class="editor-ui">Preview</h2>
+    <p class="hint editor-ui">This is the 9:16 video canvas. Press Play above to
+      test your timing, then enter recording mode for a clean full screen.</p>
+
+    <div id="stage-wrap">
+      <!-- The visual canvas. Everything inside is decorative output;
+           the audio + your voice carry the real content. -->
+      <div id="stage" aria-hidden="true">
+        <div id="scene-layers"></div>
+        <div class="stage-chrome">
+          <p class="series-label" id="stage-series-label"></p>
+          <p class="series-sublabel" id="stage-series-sublabel"></p>
+        </div>
+        <div id="stage-progress"></div>
+        <div id="countdown"></div>
+      </div>
+    </div>
+
+    <div class="btn-row editor-ui" style="justify-content:center; margin-top:14px;">
+      <button id="btn-enter-recording" type="button">Enter recording mode (clean full screen)</button>
+    </div>
+  </section>
+
+  <!-- Floating controls shown only in recording mode.
+       They fade out visually during playback so your screen recording is
+       clean, but remain in the page for VoiceOver and keyboard. -->
+  <div id="rec-controls">
+    <button id="btn-rec-countdown" type="button">Play from start with 3 second countdown</button>
+    <button id="btn-rec-play" type="button" class="secondary">Play</button>
+    <button id="btn-exit-recording" type="button" class="secondary">Exit recording mode</button>
+  </div>
+
+</main>
+
+<script>
+(() => {
+'use strict';
+
+/* ==========================================================================
+   1. SAMPLE PROJECT DATA — Episode 1: the journey to Vilnius
+   Edit freely, or use "Reset to sample project" to restore this.
+   Scene fields: start, end (seconds), type, title, subtitle, caption,
+                 backgroundImage (URL or data URL), location, from, to, transport.
+   Types: title | map | location | route | travel | tennis | end
+   ========================================================================== */
+const SAMPLE_PROJECT = {
+  version: 1,
+  title: "Episode 1 — Getting there",
+  seriesLabel: "Road to Lithuania",
+  seriesSublabel: "World Blind Tennis Championships",
+  scenes: [
+    { start: 0.0, end: 5.0, type: "title",
+      title: "Road to Lithuania",
+      subtitle: "World Blind & Visually Impaired Tennis Championships",
+      caption: "This week I’m taking part in the Blind & Visually Impaired World Tennis Championships." },
+    { start: 5.0, end: 14.4, type: "map",
+      title: "Across Europe",
+      subtitle: "Ireland to Lithuania",
+      caption: "…which take place on the complete opposite side of Europe for me — in Lithuania, of all places." },
+    { start: 14.7, end: 23.0, type: "location",
+      title: "Starting in Sligo",
+      subtitle: "Northwest Ireland",
+      location: "Sligo, Ireland",
+      caption: "I’m based up in Sligo in the north west of Ireland, so it’ll take me a while to get there." },
+    { start: 23.0, end: 32.0, type: "route",
+      title: "First leg of the journey",
+      subtitle: "Bus to Dublin",
+      from: "Sligo", to: "Dublin", transport: "bus",
+      caption: "Today I’m travelling by bus down to Dublin, where I’ll spend the night in a lovely hotel." },
+    { start: 32.0, end: 39.0, type: "location",
+      title: "Dublin",
+      subtitle: "Overnight stay before flying",
+      location: "Dublin, Ireland",
+      caption: "Tomorrow I hop on a plane with the rest of the Irish team." },
+    { start: 39.0, end: 44.0, type: "route",
+      title: "Stopover",
+      subtitle: "Flight to Stockholm",
+      from: "Dublin", to: "Stockholm", transport: "plane",
+      caption: "We fly to Stockholm for a stop-off…" },
+    { start: 44.0, end: 48.5, type: "route",
+      title: "Final leg",
+      subtitle: "Stockholm to Vilnius",
+      from: "Stockholm", to: "Vilnius", transport: "plane",
+      caption: "…then another plane takes us the rest of the way to Vilnius, the capital of Lithuania." },
+    { start: 48.5, end: 63.0, type: "tennis",
+      title: "Championship updates",
+      subtitle: "Matches, practice, and plenty of running around",
+      caption: "I’ll do my best to keep everyone up to date — though there may be gaps while I’m playing matches and practising." },
+    { start: 63.0, end: 72.96, type: "end",
+      title: "Lithuania 2026",
+      subtitle: "I’ll keep you updated",
+      caption: "I’ll try to post an update at the end of every day. Thanks for following along!" }
+  ]
+};
+
+const SCENE_TYPES = ["title", "map", "location", "route", "travel", "tennis", "end"];
+const STORAGE_KEY = "roadToLithuaniaDiaryProject";
+
+/* ==========================================================================
+   2. STATE & PERSISTENCE
+   ========================================================================== */
+let project = loadProject();          // the whole editable project
+let currentSceneIndex = -1;           // which scene is on the stage
+let saveTimer = null;                 // debounce handle for localStorage saves
+
+const $ = (id) => document.getElementById(id);
+const audio = new Audio();            // single shared audio element
+audio.preload = "metadata";
+
+function loadProject() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && Array.isArray(p.scenes)) return p;
+    }
+  } catch (e) { /* corrupted storage — fall through to sample */ }
+  return structuredClone(SAMPLE_PROJECT);
+}
+
+/** Debounced auto-save. Called after every edit. */
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+    } catch (e) {
+      // Usually means an uploaded image pushed us over the storage quota.
+      announce("Warning: could not auto-save. The project may be too large for browser storage — try using image URLs instead of uploaded images, then export a JSON backup.");
+    }
+  }, 400);
+}
+
+/** Announce a message in the polite live region. */
+function announce(msg) { $("status").textContent = msg; }
+
+/** Format seconds as m:ss (e.g. 73.2 -> "1:13"). */
+function fmtTime(s) {
+  if (!isFinite(s)) return "0:00";
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ":" + String(sec).padStart(2, "0");
+}
+
+/* ==========================================================================
+   3. AUDIO — loading, transport controls, and the playback clock
+   ========================================================================== */
+$("audio-file").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  audio.src = URL.createObjectURL(file);
+  audio.load();
+  announce("Audio loaded: " + file.name + ". Press Play to start.");
+});
+
+audio.addEventListener("loadedmetadata", () => {
+  $("seek").max = audio.duration.toFixed(1);
+  updateTimeUI();
+});
+
+function togglePlay() {
+  if (!audio.src) { announce("Choose an audio file first."); return; }
+  if (audio.paused) { audio.play(); } else { audio.pause(); }
+}
+
+audio.addEventListener("play", () => {
+  document.body.classList.add("playing");
+  $("btn-play").textContent = "Pause";
+  $("btn-rec-play").textContent = "Pause";
+});
+audio.addEventListener("pause", () => {
+  document.body.classList.remove("playing");
+  $("btn-play").textContent = "Play";
+  $("btn-rec-play").textContent = "Play";
+});
+audio.addEventListener("ended", () => {
+  announce("Playback finished.");
+});
+
+$("btn-play").addEventListener("click", togglePlay);
+$("btn-rec-play").addEventListener("click", togglePlay);
+$("btn-restart").addEventListener("click", () => {
+  audio.currentTime = 0;
+  if (audio.src) audio.play();
+});
+
+/* Accessible seek slider: dragging it moves the audio. */
+let seeking = false;
+$("seek").addEventListener("input", () => {
+  seeking = true;
+  const t = parseFloat($("seek").value);
+  $("seek").setAttribute("aria-valuetext", fmtTime(t) + " of " + fmtTime(audio.duration));
+  audio.currentTime = t;
+});
+$("seek").addEventListener("change", () => { seeking = false; });
+
+/* The main sync loop: on every time update, pick the matching scene. */
+audio.addEventListener("timeupdate", () => {
+  updateTimeUI();
+  syncSceneToTime(audio.currentTime);
+});
+
+function updateTimeUI() {
+  const t = audio.currentTime || 0, d = audio.duration || 0;
+  $("time-readout").textContent = fmtTime(t) + " / " + fmtTime(d);
+  if (!seeking) {
+    $("seek").value = t.toFixed(1);
+    $("seek").setAttribute("aria-valuetext", fmtTime(t) + " of " + fmtTime(d));
+  }
+  if (d > 0) $("stage-progress").style.width = (t / d * 100) + "%";
+}
+
+/** Find the scene covering time t and show it. Gaps keep the last scene up. */
+function syncSceneToTime(t) {
+  const i = project.scenes.findIndex(s => t >= s.start && t < s.end);
+  if (i !== -1 && i !== currentSceneIndex) showScene(i);
+}
+
+/* ==========================================================================
+   4. STAGE RENDERING — building each scene's visuals
+   ========================================================================== */
+
+/** Show scene [i] on the stage with a crossfade. */
+function showScene(i) {
+  currentSceneIndex = i;
+  const scene = project.scenes[i];
+  const layers = $("scene-layers");
+
+  const layer = buildSceneLayer(scene);
+  layers.appendChild(layer);
+  // Force a reflow so the fade-in transition actually runs.
+  void layer.offsetWidth;
+  layer.classList.add("visible");
+
+  // Fade out and remove any older layers.
+  [...layers.children].forEach(el => {
+    if (el !== layer) {
+      el.classList.remove("visible");
+      setTimeout(() => el.remove(), 900);
+    }
+  });
+
+  // Update the text indicator in the editor (not announced during playback,
+  // so VoiceOver speech does not end up in your screen recording).
+  $("scene-indicator").textContent =
+    "Scene " + (i + 1) + " of " + project.scenes.length + ": " + (scene.title || scene.type);
+}
+
+/** Create the DOM for one scene. Everything here is inside the aria-hidden
+    stage — it is visual output only. */
+function buildSceneLayer(scene) {
+  const layer = document.createElement("div");
+  layer.className = "scene-layer";
+
+  // --- Background: custom image, or generated art by scene type ----------
+  const bg = document.createElement("div");
+  bg.className = "scene-bg " + (scene.backgroundImage ? "" : typeBgClass(scene.type));
+  if (scene.backgroundImage) {
+    bg.style.backgroundImage = "url('" + String(scene.backgroundImage).replace(/'/g, "%27") + "')";
+  }
+  layer.appendChild(bg);
+
+  if (!scene.backgroundImage) {
+    const deco = document.createElement("div");
+    deco.className = "deco";
+    deco.innerHTML = typeDecoration(scene);
+    layer.appendChild(deco);
+  }
+
+  // Vignette keeps text readable over any background.
+  const vig = document.createElement("div");
+  vig.className = "vignette";
+  layer.appendChild(vig);
+
+  // --- Text block --------------------------------------------------------
+  const text = document.createElement("div");
+  text.className = "scene-text";
+  if (scene.title) {
+    const h = document.createElement("p");
+    h.className = "scene-title";
+    h.textContent = scene.title;
+    text.appendChild(h);
+  }
+  if (scene.subtitle) {
+    const sub = document.createElement("p");
+    sub.className = "scene-subtitle";
+    sub.textContent = scene.subtitle;
+    text.appendChild(sub);
+  }
+  // Route / location pill, e.g. "Sligo → Dublin · bus" or "Dublin, Ireland"
+  const routeBits = [];
+  if (scene.from && scene.to) routeBits.push(scene.from + " → " + scene.to);
+  if (scene.transport) routeBits.push(scene.transport);
+  if (!routeBits.length && scene.location) routeBits.push(scene.location);
+  if (routeBits.length) {
+    const pill = document.createElement("p");
+    pill.className = "scene-route-label";
+    pill.textContent = routeBits.join(" · ");
+    text.appendChild(pill);
+  }
+  layer.appendChild(text);
+
+  // --- Caption ------------------------------------------------------------
+  if (scene.caption) {
+    const cap = document.createElement("div");
+    cap.className = "scene-caption";
+    const span = document.createElement("span");
+    span.textContent = scene.caption;
+    cap.appendChild(span);
+    layer.appendChild(cap);
+  }
+
+  return layer;
+}
+
+function typeBgClass(type) {
+  return SCENE_TYPES.includes(type) ? "bg-" + type : "bg-title";
+}
+
+/** Decorative art per scene type (returned as an HTML string).
+    Deliberately suggestive rather than geographically accurate. */
+function typeDecoration(scene) {
+  switch (scene.type) {
+    case "map":
+      // A stylised dotted journey line with glowing stop dots.
+      return `
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
+          <path class="route-path" d="M 12 150 C 30 120, 20 95, 45 85 S 80 55, 88 28"/>
+          <circle class="route-dot" cx="12" cy="150" r="3.2"/>
+          <circle class="route-dot" cx="45" cy="85"  r="2.6"/>
+          <circle class="route-dot" cx="70" cy="60"  r="2.6"/>
+          <circle class="route-dot" cx="88" cy="28"  r="3.6"/>
+          <circle class="route-halo" cx="88" cy="28" r="7"/>
+        </svg>`;
+    case "route": {
+      const icon = (scene.transport || "").toLowerCase().includes("bus") ? "🚌" : "✈️";
+      return `
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
+          <path class="route-path" d="M -5 60 C 25 50, 75 70, 105 55"/>
+        </svg>
+        <div class="transport-glide">${icon}</div>`;
+    }
+    case "travel":
+      return `
+        <div class="cloud" style="top:14%; animation-delay:0s;"></div>
+        <div class="cloud" style="top:30%; animation-delay:-9s; width:55%;"></div>
+        <div class="cloud" style="top:68%; animation-delay:-17s;"></div>`;
+    case "location":
+      return `
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
+          <circle class="route-halo" cx="50" cy="120" r="10"/>
+          <circle class="route-halo" cx="50" cy="120" r="18" style="animation-delay:1.2s"/>
+          <circle class="route-dot"  cx="50" cy="120" r="4"/>
+        </svg>`;
+    case "tennis":
+      // Minimal court markings plus a bouncing ball.
+      return `
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
+          <rect class="court-line" x="14" y="95" width="72" height="70" rx="1"/>
+          <line class="court-line" x1="14" y1="130" x2="86" y2="130"/>
+          <line class="court-line" x1="50" y1="95" x2="50" y2="165"/>
+        </svg>
+        <div class="tennis-ball" style="left:64%; top:38%;"></div>`;
+    case "end":
+      return `
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice">
+          <circle class="route-halo" cx="50" cy="89" r="26" style="animation-duration:4s"/>
+        </svg>`;
+    default: // "title" and anything unknown
+      return "";
+  }
+}
+
+/** Re-render the stage chrome (series labels) and current scene. */
+function refreshStage() {
+  $("stage-series-label").textContent = project.seriesLabel || "";
+  $("stage-series-sublabel").textContent = project.seriesSublabel || "";
+  const i = currentSceneIndex >= 0 && currentSceneIndex < project.scenes.length
+    ? currentSceneIndex : 0;
+  if (project.scenes.length) { currentSceneIndex = -1; showScene(i); }
+}
+
+/* ==========================================================================
+   5. SCENE EDITOR — the editable scene list
+   ========================================================================== */
+
+/** (Re)build all scene cards. Called after structural changes
+    (add / remove / move / duplicate / import / reset). */
+function renderSceneEditor() {
+  const list = $("scene-list");
+  list.innerHTML = "";
+  project.scenes.forEach((scene, i) => list.appendChild(buildSceneCard(scene, i)));
+}
+
+/** One labelled input bound to a scene field. */
+function field(scene, i, key, labelText, opts = {}) {
+  const wrap = document.createElement("div");
+  const id = "scene-" + i + "-" + key;
+  const label = document.createElement("label");
+  label.setAttribute("for", id);
+  label.textContent = labelText;
+  wrap.appendChild(label);
+
+  let input;
+  if (opts.type === "select") {
+    input = document.createElement("select");
+    SCENE_TYPES.forEach(t => {
+      const o = document.createElement("option");
+      o.value = t; o.textContent = t;
+      input.appendChild(o);
+    });
+  } else if (opts.type === "textarea") {
+    input = document.createElement("textarea");
+    input.rows = 2;
+  } else {
+    input = document.createElement("input");
+    input.type = opts.type || "text";
+    if (opts.type === "number") { input.step = "0.1"; input.min = "0"; input.inputMode = "decimal"; }
+  }
+  input.id = id;
+  input.value = scene[key] ?? "";
+
+  input.addEventListener("change", () => {
+    scene[key] = (opts.type === "number") ? (parseFloat(input.value) || 0) : input.value;
+    scheduleSave();
+    // Refresh the card's legend and the stage so edits are visible at once.
+    const card = input.closest("fieldset");
+    if (card) card.querySelector("legend").textContent = legendText(scene, i);
+    refreshStage();
+  });
+
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function legendText(scene, i) {
+  return "Scene " + (i + 1) + ": " + (scene.title || scene.type || "untitled") +
+         " (" + scene.start + "–" + scene.end + " seconds)";
+}
+
+/** Build the full editor card for one scene. */
+function buildSceneCard(scene, i) {
+  const card = document.createElement("fieldset");
+  card.className = "scene-card";
+  const legend = document.createElement("legend");
+  legend.textContent = legendText(scene, i);
+  card.appendChild(legend);
+
+  const grid = document.createElement("div");
+  grid.className = "field-grid";
+  grid.appendChild(field(scene, i, "start", "Start time (seconds)", { type: "number" }));
+  grid.appendChild(field(scene, i, "end", "End time (seconds)", { type: "number" }));
+  card.appendChild(grid);
+
+  card.appendChild(field(scene, i, "type", "Scene type", { type: "select" }));
+  card.appendChild(field(scene, i, "title", "Title"));
+  card.appendChild(field(scene, i, "subtitle", "Subtitle"));
+  card.appendChild(field(scene, i, "caption", "Caption text (shown near the bottom)", { type: "textarea" }));
+
+  const grid2 = document.createElement("div");
+  grid2.className = "field-grid";
+  grid2.appendChild(field(scene, i, "location", "Location label"));
+  grid2.appendChild(field(scene, i, "transport", "Transport (e.g. bus, plane)"));
+  grid2.appendChild(field(scene, i, "from", "Route from"));
+  grid2.appendChild(field(scene, i, "to", "Route to"));
+  card.appendChild(grid2);
+
+  // --- Background image: URL field plus an upload that stores a data URL --
+  card.appendChild(field(scene, i, "backgroundImage", "Background image URL (optional)", { type: "url" }));
+
+  const upWrap = document.createElement("div");
+  const upId = "scene-" + i + "-imgupload";
+  const upLabel = document.createElement("label");
+  upLabel.setAttribute("for", upId);
+  upLabel.textContent = "Or upload a background image";
+  const upInput = document.createElement("input");
+  upInput.type = "file";
+  upInput.id = upId;
+  upInput.accept = "image/*";
+  upInput.addEventListener("change", () => {
+    const f = upInput.files && upInput.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      scene.backgroundImage = reader.result;   // data URL, persisted with project
+      scheduleSave();
+      renderSceneEditor();                      // refresh the URL field display
+      refreshStage();
+      announce("Image added to scene " + (i + 1) + ".");
+    };
+    reader.readAsDataURL(f);
+  });
+  upWrap.appendChild(upLabel);
+  upWrap.appendChild(upInput);
+  card.appendChild(upWrap);
+
+  // --- Per-scene action buttons ------------------------------------------
+  const actions = document.createElement("div");
+  actions.className = "btn-row";
+  actions.appendChild(sceneButton("Preview this scene", "secondary", () => {
+    if (!audio.src) {
+      // No audio yet: still show the visuals so styling can be checked.
+      showScene(i);
+      announce("Showing scene " + (i + 1) + " on the preview canvas. Load audio to hear it in sync.");
+    } else {
+      audio.currentTime = scene.start + 0.01;
+      audio.play();
+    }
+  }));
+  actions.appendChild(sceneButton("Move up", "secondary", () => moveScene(i, -1)));
+  actions.appendChild(sceneButton("Move down", "secondary", () => moveScene(i, +1)));
+  actions.appendChild(sceneButton("Duplicate", "secondary", () => {
+    project.scenes.splice(i + 1, 0, structuredClone(scene));
+    afterStructuralChange("Scene duplicated. The copy is scene " + (i + 2) + ".");
+  }));
+  actions.appendChild(sceneButton("Delete this scene", "danger", () => {
+    if (!confirm("Delete scene " + (i + 1) + " (" + (scene.title || scene.type) + ")?")) return;
+    project.scenes.splice(i, 1);
+    afterStructuralChange("Scene deleted. " + project.scenes.length + " scenes remain.");
+  }));
+  // Give buttons unambiguous accessible names that include the scene number.
+  [...actions.children].forEach(btn =>
+    btn.setAttribute("aria-label", btn.textContent + ", scene " + (i + 1)));
+  card.appendChild(actions);
+
+  return card;
+}
+
+function sceneButton(text, cls, onClick) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = text;
+  if (cls) b.className = cls;
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function moveScene(i, delta) {
+  const j = i + delta;
+  if (j < 0 || j >= project.scenes.length) {
+    announce("Cannot move scene " + (i + 1) + " further.");
+    return;
+  }
+  const [s] = project.scenes.splice(i, 1);
+  project.scenes.splice(j, 0, s);
+  afterStructuralChange("Scene moved to position " + (j + 1) + ".");
+}
+
+function afterStructuralChange(message) {
+  scheduleSave();
+  renderSceneEditor();
+  refreshStage();
+  announce(message);
+}
+
+$("btn-add-scene").addEventListener("click", () => {
+  const last = project.scenes[project.scenes.length - 1];
+  const start = last ? last.end : 0;
+  project.scenes.push({
+    start, end: start + 5, type: "location",
+    title: "New scene", subtitle: "", caption: ""
+  });
+  afterStructuralChange("New scene added at the end, starting at " + start + " seconds. It is scene " + project.scenes.length + ".");
+});
+
+/* ==========================================================================
+   6. PROJECT TOOLS — settings, export, import, reset
+   ========================================================================== */
+const PROJECT_FIELDS = [
+  ["project-title", "title"],
+  ["series-label", "seriesLabel"],
+  ["series-sublabel", "seriesSublabel"]
+];
+// Attach listeners once; values are refreshed by initProjectUI on load/import/reset.
+PROJECT_FIELDS.forEach(([inputId, key]) => {
+  $(inputId).addEventListener("change", () => {
+    project[key] = $(inputId).value;
+    scheduleSave();
+    refreshStage();
+  });
+});
+
+$("btn-export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (project.title || "diary-project").replace(/[^\w\-]+/g, "-").toLowerCase() + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  announce("Project exported as a JSON download.");
+});
+
+$("btn-import").addEventListener("click", () => $("import-file").click());
+$("import-file").addEventListener("change", () => {
+  const f = $("import-file").files && $("import-file").files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const p = JSON.parse(reader.result);
+      if (!p || !Array.isArray(p.scenes)) throw new Error("missing scenes");
+      project = p;
+      initProjectUI();
+      announce("Project imported: " + (p.title || "untitled") + ", " + p.scenes.length + " scenes.");
+    } catch (e) {
+      announce("Import failed — that file does not look like a valid project JSON.");
+    }
+  };
+  reader.readAsText(f);
+});
+
+$("btn-reset").addEventListener("click", () => {
+  if (!confirm("Replace your current project with the sample Lithuania episode? Your current scenes will be lost unless you exported them.")) return;
+  project = structuredClone(SAMPLE_PROJECT);
+  initProjectUI();
+  announce("Sample project restored: " + project.scenes.length + " scenes.");
+});
+
+/* ==========================================================================
+   7. RECORDING MODE — clean presentation for screen recording
+   ========================================================================== */
+$("btn-enter-recording").addEventListener("click", enterRecording);
+$("btn-exit-recording").addEventListener("click", exitRecording);
+
+function enterRecording() {
+  document.body.classList.add("recording");
+  window.scrollTo(0, 0);
+  announce("Recording mode on. The screen shows only the video canvas. The three control buttons fade out while audio plays but VoiceOver can still reach them. Press Escape or the Exit button to leave.");
+  $("btn-rec-countdown").focus();
+}
+
+function exitRecording() {
+  document.body.classList.remove("recording");
+  announce("Recording mode off. Editor restored.");
+  $("btn-enter-recording").focus();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.body.classList.contains("recording")) exitRecording();
+});
+
+/* Play-from-start with a short visual countdown, so you have time to start
+   the iPhone screen recording before the video begins. */
+$("btn-rec-countdown").addEventListener("click", () => {
+  if (!audio.src) { announce("Choose an audio file first, in the editor."); return; }
+  audio.pause();
+  audio.currentTime = 0;
+  let n = 3;
+  const cd = $("countdown");
+  cd.textContent = n;
+  cd.classList.add("on");
+  announce("Playing from the start in 3 seconds.");
+  const tick = setInterval(() => {
+    n -= 1;
+    if (n > 0) { cd.textContent = n; }
+    else {
+      clearInterval(tick);
+      cd.classList.remove("on");
+      cd.textContent = "";
+      audio.play();
+    }
+  }, 1000);
+});
+
+/* ==========================================================================
+   8. INIT
+   ========================================================================== */
+function initProjectUI() {
+  PROJECT_FIELDS.forEach(([inputId, key]) => { $(inputId).value = project[key] || ""; });
+  renderSceneEditor();
+  currentSceneIndex = -1;
+  refreshStage();
+  scheduleSave();
+}
+
+initProjectUI();
+announce("Ready. Project loaded with " + project.scenes.length + " scenes. Choose an audio file to begin.");
+
+})();
+</script>
+</body>
+</html>
