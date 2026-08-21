@@ -1253,7 +1253,7 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
     </div>
 
     <div class="foot__legal">
-      <p id="contact-note"><strong>Contact.</strong> The registry does not operate a correspondence facility and publishes no address of its own. A petition prepared through the case preparation service opens in your own email application, addressed wherever you choose to address it, and is sent only if you send it yourself. This page transmits nothing.</p>
+      <p id="contact-note"><strong>Contact.</strong> The registry does not operate a correspondence facility. Petitions prepared through the case preparation service are addressed, by default, to <a href="mailto:Hello@thetechdocpod.com">Hello@thetechdocpod.com</a>, and may be addressed elsewhere at the sender&rsquo;s discretion. Such a petition opens in your own email application and is sent only if you send it yourself. This page transmits nothing.</p>
       <p id="parody-notice"><strong>Parody notice.</strong> Public Canonisation Registry is an independent parody project. It is not affiliated with the Vatican, the Catholic Church, the Holy See or any ecclesiastical authority. No nominations are submitted externally, and nominations are not submitted to the Vatican or any ecclesiastical authority. All candidates, statistics, case references and figures shown here are fictional, and any resemblance to identifiable individuals is unintended.</p>
       <p>&copy; 2026 Public Canonisation Registry. Built as a single static page. No cookies, no analytics, no data collection.</p>
     </div>
@@ -3444,9 +3444,9 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
      answers. No model, no service, no request of any kind.
      ========================================================== */
 
-  /* The Registry publishes no address of its own. A destination may be
-     configured here; otherwise the nominating party supplies one. */
-  var DEFAULT_RECIPIENT = "";
+  /* The address to which prepared petitions are directed by default.
+     The nominating party may address the petition elsewhere. */
+  var DEFAULT_RECIPIENT = "Hello@thetechdocpod.com";
   var RECIPIENT_KEY = "pcr.recipient.v1";
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -3980,7 +3980,7 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
             '<input type="text" id="petitionSubject" autocomplete="off"></div>' +
           '<div class="preview__row"><label for="petitionTo">Destination</label>' +
             '<input type="email" id="petitionTo" autocomplete="off" placeholder="name@example.com" value="' + esc(to) + '" aria-describedby="petitionToHint">' +
-            '<span class="hint" id="petitionToHint" style="margin:0">The Registry publishes no address of its own. Enter the address this petition should be addressed to; it is remembered in this browser and nowhere else. Leaving it empty opens your email application with the recipient blank.</span></div>' +
+            '<span class="hint" id="petitionToHint" style="margin:0">Petitions are directed to the registry&rsquo;s submissions address by default. You may address this one elsewhere; whatever you enter is remembered in this browser and nowhere else.</span></div>' +
         "</div>" +
         '<div class="preview__body">' +
           '<label for="petitionBody" style="display:block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);font-weight:700;margin-bottom:6px">Petition (editable)</label>' +
