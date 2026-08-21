@@ -385,7 +385,7 @@ hr{border:0;border-top:1px solid var(--line-soft);margin:0}
 .field{margin-bottom:26px}
 .field > label,.legend{display:block;font-size:.95rem;font-weight:650;color:var(--charcoal);margin-bottom:6px}
 .hint{display:block;font-size:.84rem;color:var(--muted);margin:0 0 8px;max-width:60ch}
-input[type=text],input[type=date],textarea,select{
+input[type=text],input[type=date],input[type=email],textarea,select{
   width:100%;font:inherit;font-size:1rem;color:var(--ink);background:var(--ivory);
   border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;min-height:48px;
   transition:border-color .15s ease,box-shadow .15s ease;
@@ -470,6 +470,8 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
 .modal__close:hover{background:var(--stone)}
 .modal__body{padding:clamp(18px,4vw,30px)}
 .modal h2{margin:0;font-size:clamp(1.5rem,4.4vw,1.9rem)}
+.modal__head .eyebrow::after{display:none}
+.modal__head .eyebrow{flex-wrap:wrap}
 .modal__loc{margin:4px 0 0;font-size:.88rem;color:var(--muted-2)}
 .modal__figures{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px}
 .modal__fig{background:var(--stone);border-radius:var(--radius);padding:14px 16px}
@@ -511,6 +513,218 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
 }
 .foot__legal p{font-size:.86rem;color:#D3C4B4;max-width:80ch;line-height:1.6}
 .foot__legal strong{color:#FBF6EF;font-weight:600}
+
+/* ============================================================
+   Case preparation — route chooser
+   ============================================================ */
+.routes{display:grid;gap:18px;margin-bottom:34px}
+@media (min-width:760px){.routes{grid-template-columns:repeat(2,1fr)}}
+.route{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:24px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-sm);
+}
+.route--case{border-color:var(--gold-soft);background:linear-gradient(180deg,#FFFDF8,var(--paper))}
+.route h3{margin:0;font-size:1.3rem}
+.route p{margin:0;font-size:.94rem;color:var(--muted)}
+.route__meta{
+  display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.78rem;color:var(--muted-2);
+  border-top:1px dotted var(--line);padding-top:12px;margin-top:2px;
+}
+.route__meta span{display:inline-flex;align-items:center;gap:.35rem}
+.route .btn{margin-top:auto;align-self:flex-start}
+@media (max-width:599px){.route .btn{align-self:stretch}}
+
+/* ============================================================
+   Wizard
+   ============================================================ */
+.wizard{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);overflow:hidden;
+}
+.wizard__head{
+  padding:20px clamp(18px,4vw,34px);border-bottom:1px solid var(--line-soft);
+  background:linear-gradient(180deg,var(--stone),var(--paper));
+}
+.wizard__ref{
+  display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;
+  font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);font-weight:650;
+}
+.wizard__ref b{color:var(--burgundy);letter-spacing:.06em}
+.wizard__prog{margin-top:14px}
+.wizard__prog-text{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;
+  font-size:.86rem;color:var(--ink);font-weight:600;margin-bottom:8px;
+}
+.wizard__prog-text span:last-child{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--stone-2);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--burgundy);transition:width .35s ease}
+.wizard__body{padding:clamp(20px,4vw,34px)}
+.wizard__foot{
+  padding:18px clamp(18px,4vw,34px);border-top:1px solid var(--line-soft);background:var(--ivory);
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+}
+.wizard__foot .spacer{flex:1 1 auto}
+@media (max-width:599px){
+  .wizard__foot{flex-direction:column;align-items:stretch}
+  .wizard__foot .btn{width:100%}
+  .wizard__foot .spacer{display:none}
+}
+.step-head{margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--burgundy)}
+.step-head h3{margin:0 0 6px;font-size:clamp(1.3rem,3.6vw,1.6rem)}
+.step-head h3:focus{outline:none}
+.step-head p{margin:0;font-size:.94rem;color:var(--muted);max-width:60ch}
+.step-head .eyebrow{margin-bottom:.6rem}
+.q{padding:20px 0;border-bottom:1px solid var(--line-soft)}
+.q:last-child{border-bottom:0;padding-bottom:4px}
+.q__n{
+  display:block;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gold);font-weight:700;margin-bottom:5px;
+}
+.q > label,.q .legend{font-size:1.02rem;font-weight:600;color:var(--charcoal);display:block;margin-bottom:6px}
+.q .hint{margin-bottom:10px}
+.follow{
+  margin-top:16px;padding:16px 18px;border-left:3px solid var(--gold-soft);
+  background:var(--stone);border-radius:0 var(--radius) var(--radius) 0;
+}
+.follow[hidden]{display:none}
+.follow__label{
+  font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
+  font-weight:700;margin:0 0 12px;
+}
+.follow .q{padding:12px 0;border-bottom:1px dotted var(--line)}
+.follow .q:last-child{border-bottom:0;padding-bottom:0}
+.follow .q > label,.follow .q .legend{font-size:.95rem}
+.resume{
+  border:1px solid var(--gold-soft);background:#FFFBF2;border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:26px;
+}
+.resume[hidden]{display:none}
+.resume h3{margin:0 0 6px;font-size:1.1rem}
+.resume p{margin:0 0 14px;font-size:.92rem;color:var(--muted)}
+.resume .btn-row{margin-top:0}
+
+/* ============================================================
+   Dossier / case review
+   ============================================================ */
+.dossier{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-md);overflow:hidden;position:relative;
+}
+.dossier__band{
+  background:var(--burgundy);color:#F6EDE2;padding:16px clamp(18px,4vw,34px);
+  display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;max-width:none;margin:0;
+}
+.dossier__band b{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.dossier__band span{font-size:.78rem;letter-spacing:.06em;color:#E3CFC0;font-variant-numeric:tabular-nums}
+.dossier__head{padding:clamp(22px,4vw,34px) clamp(18px,4vw,34px) 0;position:relative}
+.dossier__no{
+  font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);font-weight:700;
+  margin:0 0 6px;
+}
+.dossier__name{margin:0 0 4px;font-size:clamp(1.6rem,5vw,2.2rem)}
+.dossier__name:focus{outline:none}
+.dossier__sub{margin:0;color:var(--muted);font-size:.96rem}
+.stamp{
+  display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+  border:2px solid var(--burgundy);color:var(--burgundy);border-radius:4px;
+  padding:8px 14px;transform:rotate(-3.5deg);opacity:.85;
+  font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;text-align:center;
+  line-height:1.35;background:rgba(255,255,255,.4);
+}
+.stamp b{font-size:.78rem;letter-spacing:.1em}
+.stamp--right{position:absolute;top:18px;right:clamp(14px,4vw,30px);max-width:190px}
+@media (max-width:719px){
+  .stamp--right{position:static;transform:rotate(-2deg);margin-bottom:16px;align-self:flex-start}
+}
+.dossier__grid{
+  padding:24px clamp(18px,4vw,34px) 0;display:grid;gap:1px;background:var(--line-soft);
+  border:1px solid var(--line-soft);margin:24px clamp(18px,4vw,34px) 0;padding:0;border-radius:var(--radius);overflow:hidden;
+}
+@media (min-width:640px){.dossier__grid{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:960px){.dossier__grid{grid-template-columns:repeat(3,1fr)}}
+.dfield{background:var(--paper);padding:14px 16px}
+.dfield dt{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);font-weight:700}
+.dfield dd{margin:5px 0 0;font-size:.98rem;color:var(--ink);line-height:1.45}
+.dfield dd b{font-family:var(--font-serif);font-size:1.15rem;font-weight:600;color:var(--burgundy)}
+.dossier__section{padding:0 clamp(18px,4vw,34px);margin-top:30px}
+.dossier__section h3{
+  font-size:1.15rem;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line);
+}
+.dossier__section h4{margin:18px 0 6px;font-size:.86rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+.dossier__foot{padding:26px clamp(18px,4vw,34px) clamp(24px,4vw,32px);margin-top:30px;border-top:1px solid var(--line-soft);background:var(--ivory)}
+.strength{
+  display:grid;gap:10px;background:var(--stone);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:18px 20px;
+}
+.strength__v{font-family:var(--font-serif);font-size:clamp(1.3rem,4vw,1.7rem);color:var(--burgundy);font-weight:600;line-height:1.15}
+.strength__meter{height:8px;background:var(--stone-2);border-radius:4px;overflow:hidden}
+.strength__meter i{display:block;height:100%;background:var(--burgundy)}
+.strength ul{display:grid;gap:6px;margin-top:4px}
+.strength li{font-size:.9rem;color:var(--muted);padding-left:16px;position:relative}
+.strength li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:1px;background:var(--gold-soft)}
+.answers{display:grid;gap:14px}
+.answers .qa{display:grid;gap:3px;padding-bottom:12px;border-bottom:1px dotted var(--line)}
+.answers .qa:last-child{border-bottom:0}
+.answers dt{font-size:.85rem;color:var(--muted-2);font-weight:600}
+.answers dd{margin:0;font-size:.98rem;color:var(--ink)}
+.redact{
+  display:inline-block;height:.9em;width:5.5em;background:var(--charcoal);border-radius:1px;
+  vertical-align:-.08em;opacity:.86;
+}
+
+/* ============================================================
+   Petition composer
+   ============================================================ */
+.compose{margin-top:30px;padding:0 clamp(18px,4vw,34px) clamp(24px,4vw,34px)}
+.compose[hidden]{display:none}
+.opt-grid{display:grid;gap:8px}
+@media (min-width:620px){.opt-grid--2{grid-template-columns:repeat(2,1fr)}}
+.opt{
+  display:flex;gap:12px;align-items:flex-start;padding:13px 15px;min-height:48px;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--ivory);cursor:pointer;
+}
+.opt:hover{border-color:var(--gold-soft);background:var(--paper)}
+.opt input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--burgundy)}
+.opt b{display:block;font-size:.97rem;font-weight:650;color:var(--charcoal)}
+.opt span{display:block;font-size:.84rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.preview{margin-top:26px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.preview[hidden]{display:none}
+.preview__head{background:var(--stone);padding:16px 18px;border-bottom:1px solid var(--line-soft);display:grid;gap:14px}
+.preview__row{display:grid;gap:6px}
+.preview__row label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);font-weight:700}
+.preview__body{padding:16px 18px;background:var(--paper)}
+#petitionBody{
+  width:100%;min-height:340px;font-family:var(--font-sans);font-size:.95rem;line-height:1.65;
+  white-space:pre-wrap;
+}
+.preview__actions{display:flex;flex-wrap:wrap;gap:10px;padding:0 18px 18px;background:var(--paper)}
+@media (max-width:599px){.preview__actions .btn{width:100%}}
+.warn{
+  margin-top:14px;font-size:.86rem;color:#7A4A12;background:#FDF6E6;border:1px solid #EBDCBC;
+  border-radius:var(--radius);padding:12px 14px;
+}
+.warn[hidden]{display:none}
+.live-note{font-size:.88rem;color:var(--up);font-weight:600;min-height:1.3em}
+.live-note:empty{min-height:0}
+
+/* ============================================================
+   Dossier additions inside the candidate dialog
+   ============================================================ */
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.chip{
+  font-size:.74rem;font-weight:650;letter-spacing:.02em;padding:5px 10px;border-radius:3px;
+  background:var(--stone);color:var(--muted);border:1px solid var(--line-soft);
+}
+.chip--rank{background:var(--burgundy-tint);color:var(--burgundy);border-color:#EAD6DA}
+.chip--up{background:#EAF3ED;color:var(--up);border-color:#CFE3D7}
+.chip--down{background:#FBEDEC;color:var(--down);border-color:#EDD3D0}
+.acts{display:grid;gap:8px;margin:6px 0 0}
+.acts li{position:relative;padding-left:18px;font-size:.95rem;color:var(--ink)}
+.acts li::before{content:"";position:absolute;left:0;top:.66em;width:8px;height:1px;background:var(--gold-soft)}
+.commentary{
+  font-family:var(--font-serif);font-size:1.02rem;line-height:1.55;color:var(--charcoal);
+  border-left:3px solid var(--gold-soft);padding:4px 0 4px 16px;margin:6px 0 0;
+}
 
 /* ============================================================
    Motion
@@ -703,7 +917,7 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
         <span class="stage__n">Stage 1</span>
         <h3>Public nomination</h3>
         <p>A nomination is submitted with a description of the candidate&rsquo;s act and any available supporting information.</p>
-        <p class="stage__note">Median submission time: 4 minutes.</p>
+        <p class="stage__note">Median submission time: 4 minutes. Where a candidate is to be considered beyond preliminary review, the Registry&rsquo;s <a href="#nominate">fifty-question evidentiary questionnaire</a> is used instead.</p>
       </li>
       <li class="stage">
         <span class="stage__n">Stage 2</span>
@@ -742,6 +956,39 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
       <h2 id="nominateHeading">Nominate a candidate</h2>
       <p class="lede">Use this form to nominate someone whose actions you believe demonstrate exceptional everyday decency.</p>
     </div>
+
+    <div id="routeChooser">
+      <div class="routes">
+        <article class="route" aria-labelledby="routeQuickHeading">
+          <h3 id="routeQuickHeading">Quick nomination</h3>
+          <p>A short submission recording the candidate, the location and the act. Sufficient to open a file and to enter the candidate into the weekly index.</p>
+          <p class="route__meta"><span>Nine fields</span><span>About two minutes</span><span>Opens a preliminary file</span></p>
+          <button class="btn btn--secondary" type="button" id="startQuick">Begin a quick nomination</button>
+        </article>
+        <article class="route route--case" aria-labelledby="routeCaseHeading">
+          <h3 id="routeCaseHeading">Prepare a comprehensive case</h3>
+          <p>The full evidentiary questionnaire used by the Registry when a candidate is to be considered beyond preliminary review. Fifty questions across six sections, with supplementary questions where the answers require them.</p>
+          <p class="route__meta"><span>50 questions</span><span>Six sections</span><span>Progress saved in this browser</span></p>
+          <button class="btn btn--primary" type="button" id="startCase">Begin case preparation</button>
+        </article>
+      </div>
+
+      <div class="resume" id="resumePanel" hidden>
+        <h3>Unfinished case preparation recovered</h3>
+        <p id="resumeDetail">A partially completed dossier was found in this browser.</p>
+        <div class="btn-row">
+          <button class="btn btn--primary" type="button" id="resumeCase">Resume case preparation</button>
+          <button class="btn btn--secondary" type="button" id="discardCase">Discard the saved dossier</button>
+        </div>
+      </div>
+
+      <p class="note">Both routes operate entirely within your browser. The Registry holds no server, transmits nothing, and is unable to receive a submission by any means other than a message you choose to send yourself.</p>
+    </div>
+
+    <div id="quickRoute" hidden>
+      <p><button class="btn btn--ghost" type="button" id="backFromQuick">Return to nomination options</button></p>
+      <h3 id="quickHeading" tabindex="-1" style="margin-bottom:.35em">Quick nomination</h3>
+      <p class="note" style="margin-bottom:22px">Sufficient to open a preliminary file. A comprehensive case may be prepared later without re-entering anything here.</p>
 
     <div class="form-shell" id="formShell">
       <form id="nominationForm" novalidate>
@@ -867,6 +1114,50 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
         <div class="btn-row"><button class="btn btn--secondary" type="button" id="newNomination">Submit another nomination</button></div>
       </div>
     </div>
+
+    </div><!-- /quickRoute -->
+
+    <div id="caseRoute" hidden>
+      <p><button class="btn btn--ghost" type="button" id="backFromCase">Return to nomination options</button></p>
+
+      <div class="wizard" id="wizard">
+        <div class="wizard__head">
+          <p class="wizard__ref">
+            <span>Case preparation</span>
+            <b id="wizRef">PCR/CP&ndash;0000</b>
+            <span id="wizSaved">Not yet saved</span>
+          </p>
+          <div class="wizard__prog">
+            <p class="wizard__prog-text">
+              <span id="wizStepText">Section 1 of 6 &mdash; Candidate identity</span>
+              <span id="wizCountText">Questions answered: 0 of 50</span>
+            </p>
+            <p class="vh" id="wizProgLabel">Questions answered out of fifty</p>
+            <div class="bar" id="wizBar" role="progressbar" aria-labelledby="wizProgLabel" aria-valuemin="0" aria-valuemax="50" aria-valuenow="0" aria-valuetext="0 of 50 questions answered"><i></i></div>
+          </div>
+        </div>
+
+        <form class="wizard__body" id="wizForm" novalidate>
+          <div class="form-error-summary" id="wizErrors" tabindex="-1" role="group" aria-labelledby="wizErrHeading" hidden>
+            <h3 id="wizErrHeading">This section cannot be filed yet</h3>
+            <ul id="wizErrList"></ul>
+          </div>
+          <div id="wizStep"></div>
+        </form>
+
+        <div class="wizard__foot">
+          <button class="btn btn--secondary" type="button" id="wizPrev">Previous section</button>
+          <button class="btn btn--primary" type="button" id="wizNext">Continue to section 2</button>
+          <span class="spacer" aria-hidden="true"></span>
+          <button class="btn btn--ghost" type="button" id="wizSave">Save and exit</button>
+          <button class="btn btn--ghost" type="button" id="wizReset">Start again</button>
+        </div>
+      </div>
+      <p class="vh" id="wizLive" role="status" aria-live="polite"></p>
+      <p class="note" style="margin-top:16px">Answers are written to this browser&rsquo;s local storage as you work, so that closing the page does not destroy the dossier. Nothing leaves this device.</p>
+    </div>
+
+    <div id="caseReview" hidden></div>
   </div>
 </section>
 
@@ -962,7 +1253,7 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
     </div>
 
     <div class="foot__legal">
-      <p id="contact-note"><strong>Contact.</strong> The registry does not operate a correspondence facility. No email address is published, and no message sent from this page would reach anybody, because this page cannot send messages.</p>
+      <p id="contact-note"><strong>Contact.</strong> The registry does not operate a correspondence facility and publishes no address of its own. A petition prepared through the case preparation service opens in your own email application, addressed wherever you choose to address it, and is sent only if you send it yourself. This page transmits nothing.</p>
       <p id="parody-notice"><strong>Parody notice.</strong> Public Canonisation Registry is an independent parody project. It is not affiliated with the Vatican, the Catholic Church, the Holy See or any ecclesiastical authority. No nominations are submitted externally, and nominations are not submitted to the Vatican or any ecclesiastical authority. All candidates, statistics, case references and figures shown here are fictional, and any resemblance to identifiable individuals is unintended.</p>
       <p>&copy; 2026 Public Canonisation Registry. Built as a single static page. No cookies, no analytics, no data collection.</p>
     </div>
@@ -981,14 +1272,22 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
       <button class="modal__close" type="button" id="dlgClose" aria-label="Close candidate file"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal__body">
+      <div class="chiprow" id="dlgChips"></div>
+
       <div class="modal__figures">
         <div class="modal__fig"><b id="dlgCount">0</b><span>Nominations</span></div>
-        <div class="modal__fig"><b id="dlgStage" style="font-size:1rem;font-family:var(--font-sans);font-weight:650">&mdash;</b><span>Current status</span></div>
-        <div class="modal__fig"><b id="dlgEvidence" style="font-size:1rem;font-family:var(--font-sans);font-weight:650">&mdash;</b><span>Evidence status</span></div>
-        <div class="modal__fig"><b id="dlgCompletion">&mdash;</b><span>Estimated completion</span></div>
+        <div class="modal__fig"><b id="dlgWitnesses">0</b><span>Witnesses recorded</span></div>
+        <div class="modal__fig"><b id="dlgEvidence" style="font-size:.98rem;font-family:var(--font-sans);font-weight:650">&mdash;</b><span>Evidence classification</span></div>
+        <div class="modal__fig"><b id="dlgCompletion">&mdash;</b><span>Estimated determination</span></div>
       </div>
 
       <dl class="dl" id="dlgDetails"></dl>
+
+      <h3 style="margin-top:26px">Secondary allegations of virtue</h3>
+      <ul class="acts" id="dlgActs"></ul>
+
+      <h3 style="margin-top:26px">Registry commentary</h3>
+      <p class="commentary" id="dlgCommentary"></p>
 
       <h3 style="margin-top:26px">Case timeline</h3>
       <ol class="timeline" id="dlgTimeline"></ol>
@@ -1247,6 +1546,554 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
     { t: "18 hr", html: "A candidate in <b>Leeds</b> has been recorded as maintaining composure for a fourth consecutive week." }
   ];
 
+  /* ----------------------------------------------------------
+     Dossier detail held for every candidate on the weekly index.
+     ---------------------------------------------------------- */
+  var DOSSIER = {
+    michael: {
+      no: "00476", officer: "M. Devlin, Office of Minor but Remarkable Decency",
+      title: "The man who returned a wallet with the cash still in it",
+      secondary: [
+        "Declined a reward on two separate occasions, the second time firmly.",
+        "Waited twenty minutes at the counter so that the wallet could be handed over in person.",
+        "Has not mentioned the incident to anyone who did not ask."
+      ],
+      witnessCount: 3, evidenceClass: "Unusually compelling",
+      miracle: "Not yet alleged", stage: "Preliminary review (stage 2 of 5)",
+      commentary: "The Registry notes that the wallet was returned intact, including a receipt of no value to anybody. Independent corroboration has not yet established whether the candidate counted the contents beforehand, and the Subcommittee has elected not to ask."
+    },
+    sarah: {
+      no: "00478", officer: "R. Fahy, Department of Everyday Conduct",
+      title: "The motorist who stopped in weather that excused everybody else",
+      secondary: [
+        "Remained at the roadside until the recovery vehicle arrived.",
+        "Provided a torch, and later declined its return.",
+        "Described the weather afterwards as “not too bad”."
+      ],
+      witnessCount: 2, evidenceClass: "Corroborated in part",
+      miracle: "Under preliminary consideration", stage: "Evidence received (stage 3 of 5)",
+      commentary: "The beneficiary’s account is unusually detailed and, in the assessment of this office, unusually grateful. The candidate’s own account runs to one sentence."
+    },
+    anonDublin: {
+      no: "00461", officer: "A. Ní Dhonnabháin, Directorate of Domestic Standards",
+      title: "The neighbour who has been doing this for years without telling anybody",
+      secondary: [
+        "Collects a prescription weekly and has never once referred to it as a favour.",
+        "Attends appointments as a driver and waits outside without complaint.",
+        "Has declined identification on four occasions."
+      ],
+      witnessCount: 11, evidenceClass: "Substantial and consistent",
+      miracle: "Not yet alleged", stage: "Witness review (stage 3 of 5)",
+      commentary: "Eleven accounts have been received from a single road, which the Registry regards as either overwhelming corroboration or a very organised road. Both readings favour the candidate."
+    },
+    niamh: {
+      no: "00483", officer: "T. Boyle, Department of Everyday Conduct",
+      title: "The searcher who kept walking a bit further",
+      secondary: [
+        "Searched for four hours in conditions described as “getting dark”.",
+        "Refused a reward, and then refused it again by text message.",
+        "Has since checked back twice on the animal’s welfare."
+      ],
+      witnessCount: 1, evidenceClass: "Photographic, single source",
+      miracle: "Claim withdrawn by claimant", stage: "Preliminary review (stage 2 of 5)",
+      commentary: "The owner submitted a photograph, a written statement and, unprompted, a poem. The poem has been recorded but not assessed."
+    },
+    david: {
+      no: "00489", officer: "J. Whelan, Office of Unnecessarily Thorough Investigation",
+      title: "The volunteer who never posted about it",
+      secondary: [
+        "Attends weekly and has done so for several years without interruption.",
+        "Has no public record of the activity of any kind.",
+        "Was unaware of this nomination until informed by a third party, and asked that it be withdrawn."
+      ],
+      witnessCount: 9, evidenceClass: "Corroborated; no documentary trace",
+      miracle: "Not yet alleged", stage: "Under assessment (stage 2 of 5)",
+      commentary: "The complete absence of evidence generated by the candidate is itself regarded by this office as evidence. The request for withdrawal has been noted, filed, and respectfully disregarded."
+    },
+    elaine: {
+      no: "00491", officer: "S. Kavanagh, Directorate of Domestic Standards",
+      title: "The shopper who returned the trolley in weather that did not require it",
+      secondary: [
+        "Returned a second trolley abandoned by another party.",
+        "Was observed to jog, briefly, in the rain, for the benefit of a trolley bay.",
+        "Made no reference to the weather at any point afterwards."
+      ],
+      witnessCount: 4, evidenceClass: "Largely anecdotal; weather verified",
+      miracle: "Not yet alleged", stage: "Supporting evidence requested (stage 3 of 5)",
+      commentary: "Two nominating parties described the conditions as “biblical”. The Registry has verified the conditions with the meteorological record and downgraded the description to “heavy”, without prejudice to the candidate."
+    },
+    robert: {
+      no: "00494", officer: "M. Devlin, Office of Minor but Remarkable Decency",
+      title: "The driver who let six cars in and did not make a face",
+      secondary: [
+        "Left a gap sufficient for a second vehicle, apparently on purpose.",
+        "Acknowledged each merging driver with a single raised hand.",
+        "Did not accelerate to close the gap at any stage."
+      ],
+      witnessCount: 2, evidenceClass: "Behaviour verified; footage may exist",
+      miracle: "Not yet alleged", stage: "Behaviour verified (stage 3 of 5)",
+      commentary: "Facial expression was independently described by both witnesses as “neutral throughout”. This office regards sustained neutrality in merging traffic as the more difficult of the two virtues under consideration."
+    },
+    passengerEdi: {
+      no: "00481", officer: "C. Ross, Subcommittee on Public Transport Etiquette",
+      title: "The passenger who moved the bag before anybody had to ask",
+      secondary: [
+        "Moved the bag at the point the vehicle reached standing capacity, and not later.",
+        "Made eye contact and gestured to the seat.",
+        "Did not sigh."
+      ],
+      witnessCount: 6, evidenceClass: "Unusually compelling",
+      miracle: "Pending", stage: "Witness statements pending (stage 3 of 5)",
+      commentary: "One witness described the candidate as “sound”. The Registry has recorded this as testimony of the highest available class and does not require it to be elaborated."
+    },
+    claire: {
+      no: "00496", officer: "R. Fahy, Office of Unnecessarily Thorough Investigation",
+      title: "The colleague who had the right cable",
+      secondary: [
+        "Produced both connector types without searching the bag first.",
+        "Did not require the cable to be returned by any particular time.",
+        "The cable was returned, which the Registry notes is not always the case."
+      ],
+      witnessCount: 3, evidenceClass: "Technical verification in progress",
+      miracle: "Under preliminary consideration", stage: "Technical verification (stage 3 of 5)",
+      commentary: "Cable type has been confirmed by two parties. A third recalled only relief, which has been recorded as corroborating in substance if not in detail."
+    },
+    queue: {
+      no: "00498", officer: "T. Boyle, Department of Everyday Conduct",
+      title: "The queue member who kept track of the order without being asked",
+      secondary: [
+        "Identified the correct order of persons after a disruption at the counter.",
+        "Declined the resulting advantage.",
+        "Was, on all accounts, sincere."
+      ],
+      witnessCount: 5, evidenceClass: "Consistent; sincerity assessed separately",
+      miracle: "Not yet alleged", stage: "Preliminary review (stage 2 of 5)",
+      commentary: "Sincerity is described consistently across all five accounts and, unusually, without qualification. The Registry has no established procedure for this and has opened one."
+    },
+    passengerIe: {
+      no: "00418", officer: "J. Whelan, Subcommittee on Public Transport Etiquette",
+      title: "The passenger who restored a quiet travelling environment",
+      secondary: [
+        "Made the request once, politely, and did not repeat it.",
+        "Remained seated throughout.",
+        "Was applauded by four parties, none of whom the candidate acknowledged."
+      ],
+      witnessCount: 31, evidenceClass: "Corroborated by the entire deck",
+      miracle: "Under preliminary consideration", stage: "Witness review (stage 4 of 5)",
+      commentary: "Witness testimony is unusually enthusiastic. Several accounts were received without solicitation, and two arrived before the journey had concluded. The Registry has reminded contributors that enthusiasm is not, in itself, evidence."
+    }
+  };
+  Object.keys(DOSSIER).forEach(function (k) { if (CANDIDATES[k]) { for (var f in DOSSIER[k]) CANDIDATES[k][f] = DOSSIER[k][f]; } });
+
+  /* ----------------------------------------------------------
+     Candidates carried on the monthly index.
+     ---------------------------------------------------------- */
+  var MONTHLY = {
+    deirdre: {
+      no: "00502", file: "PCR-2026-00502", name: "Deirdre F.", loc: "Ennis, Ireland", initials: "DF",
+      title: "The customer who declared an unscanned item",
+      reason: "Informed a cashier that an item had not been scanned.",
+      act: "Returned to a checkout to inform the cashier that an item beneath the trolley had not been scanned, and paid for it.",
+      count: 7418, status: "Evidence received",
+      patronage: "Honest totals, self-service checkouts and the bottom shelf of the trolley.",
+      witness: "Four accounts received, including one from the cashier, who described the candidate as “very good about it”.",
+      evidence: "Receipt held on file", evidenceClass: "Documentary; receipt retained",
+      witnessCount: 4, miracle: "Not yet alleged", stage: "Evidence received (stage 3 of 5)",
+      officer: "S. Kavanagh, Department of Everyday Conduct",
+      secondary: [
+        "Queued a second time in order to pay the outstanding amount.",
+        "Declined the cashier’s offer to disregard it.",
+        "The item was a bag of charcoal, which nobody would have noticed."
+      ],
+      commentary: "The Registry observes that the candidate had already left the premises, and returned. The distance involved has been measured and is not trivial.",
+      timeline: [["03 Aug","Nomination received"],["09 Aug","Receipt submitted in evidence"],["16 Aug","Cashier statement recorded"],["21 Aug","Case prepared for assessment"]],
+      next: "Miracle assessment", completion: "2444"
+    },
+    orla: {
+      no: "00505", file: "PCR-2026-00505", name: "Órla D.", loc: "Dublin, Ireland", initials: "OD",
+      title: "The participant who muted herself before coughing",
+      reason: "Muted her microphone in advance of a cough during a scheduled call.",
+      act: "Anticipated a cough and muted her microphone before it occurred, on a call of eleven participants.",
+      count: 6903, status: "Witness review",
+      patronage: "Remote meetings, microphone discipline and people who anticipate their own interruptions.",
+      witness: "Eleven participants were present. Nine did not notice, which the Registry regards as the intended outcome.",
+      evidence: "Recording exists but has not been requested", evidenceClass: "Unusually compelling",
+      witnessCount: 11, miracle: "Pending", stage: "Witness review (stage 3 of 5)",
+      officer: "C. Ross, Office of Minor but Remarkable Decency",
+      secondary: [
+        "Unmuted afterwards without drawing attention to the interval.",
+        "Has never said “sorry, I was on mute” in the recollection of any witness.",
+        "Ends calls at the stated time."
+      ],
+      commentary: "Two witnesses have submitted that the candidate also declines to eat during calls. This is outside the scope of the present case and has been filed for future consideration.",
+      timeline: [["05 Aug","Nomination received"],["11 Aug","Participant accounts recorded"],["18 Aug","Public nomination threshold reached"],["21 Aug","Witness review opened"]],
+      next: "Miracle assessment", completion: "2446"
+    },
+    sinead: {
+      no: "00509", file: "PCR-2026-00509", name: "Sinéad R.", loc: "Galway, Ireland", initials: "SR",
+      title: "The chair who cancelled the meeting and sent the email",
+      reason: "Cancelled a scheduled meeting on the grounds that it could have been an email, and then sent the email.",
+      act: "Cancelled a recurring forty-five-minute meeting, circulated the relevant information in writing, and did not reinstate the meeting.",
+      count: 6244, status: "Under assessment",
+      patronage: "Reclaimed afternoons, agendas and people who send the email instead.",
+      witness: "Fourteen accounts received from attendees, several of whom described the effect as “liberating”.",
+      evidence: "The email itself, submitted in full", evidenceClass: "Documentary; exceptionally clear",
+      witnessCount: 14, miracle: "Under preliminary consideration", stage: "Under assessment (stage 4 of 5)",
+      officer: "M. Devlin, Office of Unnecessarily Thorough Investigation",
+      secondary: [
+        "The email ran to four sentences and required no follow-up.",
+        "Declined to schedule a meeting to discuss the cancellation.",
+        "Has not reinstated the meeting in the eleven weeks since."
+      ],
+      commentary: "The Registry has reviewed the email. It is the assessment of this office that it could not have been shorter without losing meaning, and that this is rarer than the act itself.",
+      timeline: [["28 Jul","Nomination received"],["04 Aug","Email submitted in evidence"],["13 Aug","Attendee accounts recorded"],["20 Aug","Referred for assessment"]],
+      next: "Miracle assessment", completion: "2437"
+    },
+    brendan: {
+      no: "00512", file: "PCR-2026-00512", name: "Brendan K.", loc: "Belfast, Northern Ireland", initials: "BK",
+      title: "The correspondent who confirmed receipt",
+      reason: "Replied “Received, thanks” to an important email on the day it arrived.",
+      act: "Acknowledged receipt of a significant email within the same working day, without being asked to confirm.",
+      count: 5871, status: "Preliminary review",
+      patronage: "Acknowledged correspondence and people who close the loop.",
+      witness: "The sender, who submitted the reply in evidence and described the relief as considerable.",
+      evidence: "Screenshot submitted", evidenceClass: "Documentary; timestamped",
+      witnessCount: 2, miracle: "Not yet alleged", stage: "Preliminary review (stage 2 of 5)",
+      officer: "R. Fahy, Department of Everyday Conduct",
+      secondary: [
+        "The reply arrived within two hours of the original message.",
+        "No further prompting was required at any stage.",
+        "Has been observed to acknowledge attachments specifically."
+      ],
+      commentary: "The sender has stated that the acknowledgement removed a period of uncertainty lasting, in their estimation, an entire afternoon. The Registry has recorded this as measurable public benefit.",
+      timeline: [["09 Aug","Nomination received"],["12 Aug","Screenshot recorded"],["17 Aug","Sender statement received"],["21 Aug","Preliminary review opened"]],
+      next: "Witness verification", completion: "2452"
+    },
+    colm: {
+      no: "00515", file: "PCR-2026-00515", name: "Colm B.", loc: "Dublin, Ireland", initials: "CB",
+      title: "The traveller who surrendered a window seat he had a right to",
+      reason: "Gave up a window seat to which he held a valid and prior claim.",
+      act: "Surrendered an allocated window seat to another traveller, having boarded first and being under no obligation whatsoever.",
+      count: 5330, status: "Witness statements pending",
+      patronage: "Window seats, prior claims quietly waived and long journeys made shorter for somebody else.",
+      witness: "Two accounts received, one from the beneficiary and one from a party across the aisle.",
+      evidence: "Boarding passes may exist", evidenceClass: "Corroborated in part",
+      witnessCount: 2, miracle: "Not yet alleged", stage: "Witness statements pending (stage 3 of 5)",
+      officer: "T. Boyle, Subcommittee on Public Transport Etiquette",
+      secondary: [
+        "Moved his own belongings without prompting.",
+        "Declined the offer of the seat back after take-off.",
+        "Spent the journey in the middle seat and made no reference to it."
+      ],
+      commentary: "The candidate held the seat by allocation and by arrival. The Registry has been unable to establish any advantage gained, and has therefore classified the act as voluntary.",
+      timeline: [["07 Aug","Nomination received"],["12 Aug","Beneficiary statement received"],["18 Aug","Second account recorded"],["21 Aug","Witness statements requested"]],
+      next: "Miracle assessment", completion: "2449"
+    },
+    gerard: {
+      no: "00519", file: "PCR-2026-00519", name: "Gerard M.", loc: "Athlone, Ireland", initials: "GM",
+      title: "The man who read the instructions first",
+      reason: "Consulted the supplied documentation before requesting assistance.",
+      act: "Read the instructions in full, attempted the procedure as described, and only then asked for help.",
+      count: 4788, status: "Technical verification",
+      patronage: "Supplied documentation, flat-pack assembly and people who ask a better question as a result.",
+      witness: "Three accounts, including one from the person who was eventually asked and reported the question to be “already half-answered”.",
+      evidence: "The instructions, retained and annotated", evidenceClass: "Documentary; annotated",
+      witnessCount: 3, miracle: "Pending", stage: "Technical verification (stage 3 of 5)",
+      officer: "J. Whelan, Office of Unnecessarily Thorough Investigation",
+      secondary: [
+        "Located the correct section of the manual without assistance.",
+        "Retained the remaining parts in the original bag.",
+        "Did not describe the instructions as “useless” at any point."
+      ],
+      commentary: "The annotated documentation has been examined by this office. The annotations are legible, dated, and in one instance correct where the manufacturer was not.",
+      timeline: [["06 Aug","Nomination received"],["13 Aug","Documentation submitted"],["19 Aug","Technical verification opened"],["21 Aug","Interim findings noted"]],
+      next: "Miracle assessment", completion: "2454"
+    },
+    tralee: {
+      no: "00521", file: "PCR-2026-00521", name: "Anonymous", loc: "Tralee, Ireland", initials: "AN",
+      title: "The colleague who replaced the roll and disposed of the tube",
+      reason: "Replaced a depleted roll and disposed of the tube.",
+      act: "Replaced a depleted roll on the holder, in the correct orientation, and disposed of the tube.",
+      count: 4102, status: "Witness review",
+      patronage: "Shared facilities, holders used as designed and the disposal of what remains.",
+      witness: "Accounts from six colleagues. The candidate has not come forward and is not expected to.",
+      evidence: "None; the act leaves no trace by design", evidenceClass: "Largely circumstantial",
+      witnessCount: 6, miracle: "Not yet alleged", stage: "Witness review (stage 3 of 5)",
+      officer: "S. Kavanagh, Directorate of Domestic Standards",
+      secondary: [
+        "The replacement was mounted on the holder rather than beside it.",
+        "The spare supply was restocked at the same time.",
+        "No announcement followed."
+      ],
+      commentary: "The Registry has received six independent nominations for a single act which nobody witnessed. The case rests entirely on the condition in which the facility was found, which this office considers sufficient.",
+      timeline: [["10 Aug","Nomination received"],["14 Aug","Additional nominations consolidated"],["19 Aug","Premises inspected"],["21 Aug","Witness review opened"]],
+      next: "Miracle assessment", completion: "2457"
+    },
+    fiona: {
+      no: "00524", file: "PCR-2026-00524", name: "Fiona L.", loc: "Bray, Ireland", initials: "FL",
+      title: "The driver who indicated on the roundabout",
+      reason: "Indicated correctly on a roundabout, in the correct lane, on both entry and exit.",
+      act: "Signalled on approach, held the correct lane throughout, and signalled again on exit.",
+      count: 3610, status: "Behaviour verified",
+      patronage: "Indicators, roundabouts and the reasonable expectations of other drivers.",
+      witness: "Two accounts from following vehicles, both of whom reported knowing what was about to happen.",
+      evidence: "Dashcam footage may exist", evidenceClass: "Behaviour verified",
+      witnessCount: 2, miracle: "Not yet alleged", stage: "Behaviour verified (stage 3 of 5)",
+      officer: "R. Fahy, Department of Everyday Conduct",
+      secondary: [
+        "Cancelled the indicator afterwards.",
+        "Did not indicate left while proceeding straight ahead, which the Registry notes is the more common submission.",
+        "Maintained the same conduct at the following two junctions."
+      ],
+      commentary: "Both witnesses were following the candidate and reported being able to plan accordingly. The Registry has classified this as public benefit of a preventative character.",
+      timeline: [["08 Aug","Nomination received"],["15 Aug","Second account recorded"],["19 Aug","Behaviour verified"],["21 Aug","Case prepared"]],
+      next: "Witness verification", completion: "2461"
+    },
+    charger: {
+      no: "00527", file: "PCR-2026-00527", name: "Anonymous", loc: "Cork, Ireland", initials: "AN",
+      title: "The borrower who returned the charger",
+      reason: "Returned a borrowed charger, unprompted and in working order.",
+      act: "Returned a borrowed charger the following morning, complete with the cable, without being reminded.",
+      count: 3187, status: "Preliminary review",
+      patronage: "Returned property, borrowed cables and things given back before they are missed.",
+      witness: "One account, from the owner, who had not yet noticed the charger was gone.",
+      evidence: "The charger itself", evidenceClass: "Physical; in working order",
+      witnessCount: 1, miracle: "Not yet alleged", stage: "Preliminary review (stage 2 of 5)",
+      officer: "C. Ross, Office of Minor but Remarkable Decency",
+      secondary: [
+        "The cable was returned wound, rather than knotted.",
+        "The return took place before the owner had need of it.",
+        "No reminder was issued at any stage."
+      ],
+      commentary: "The Registry maintains a standing file on borrowed chargers. This is the fourth recorded return since records began, and the first to include the cable.",
+      timeline: [["12 Aug","Nomination received"],["16 Aug","Charger inspected"],["20 Aug","Owner statement recorded"],["21 Aug","Preliminary review opened"]],
+      next: "Witness verification", completion: "2468"
+    }
+  };
+  Object.keys(MONTHLY).forEach(function (k) { CANDIDATES[k] = MONTHLY[k]; });
+
+  RANKINGS.month = [
+    { id: "deirdre", move: { t: "up", n: 2 } },
+    { id: "orla", move: { t: "up", n: 4 } },
+    { id: "sinead", move: { t: "same" } },
+    { id: "brendan", move: { t: "down", n: 2 } },
+    { id: "colm", move: { t: "new" } },
+    { id: "gerard", move: { t: "up", n: 1 } },
+    { id: "tralee", move: { t: "down", n: 3 } },
+    { id: "passengerIe", move: { t: "new" } },
+    { id: "fiona", move: { t: "up", n: 5 } },
+    { id: "charger", move: { t: "new" } }
+  ];
+
+  FEED = [
+    { t: "9 min", html: "Candidate nominated for returning &euro;2 found beside a vending machine." },
+    { t: "14 min", html: "<b>Mary C. in Mayo</b> nominated an anonymous neighbour for bringing bins in during a storm." },
+    { t: "31 min", html: "Supporting testimony received regarding an incident involving an unattended umbrella." },
+    { t: "38 min", html: "<b>Patrick R. in Belfast</b> nominated a colleague for making tea without requiring a group order." },
+    { t: "52 min", html: "Miracle claim downgraded to unusually fortunate coincidence." },
+    { t: "1 hr", html: "<b>Someone in Galway</b> nominated a commuter for removing their backpack before entering a crowded bus." },
+    { t: "2 hr", html: "An unnamed passenger in Ireland was nominated for restoring peace during a public transport incident.", candidate: "passengerIe" },
+    { t: "2 hr", html: "Case transferred to the Department of Minor but Remarkable Decency." },
+    { t: "3 hr", html: "A nomination from <b>Cork</b> has progressed to witness review." },
+    { t: "4 hr", html: "Witness statement rejected for excessive enthusiasm." }
+  ];
+  FEED_MORE = [
+    { t: "5 hr", html: "<b>Aoife N. in Sligo</b> nominated a stranger for holding a lift and then apologising for the delay." },
+    { t: "6 hr", html: "An anonymous candidate in <b>Dublin</b> has received their 500th nomination." },
+    { t: "7 hr", html: "<b>Tom B. in Derry</b> nominated a bus driver for waiting the extra four seconds." },
+    { t: "8 hr", html: "Evidence classification revised from &ldquo;compelling&rdquo; to &ldquo;strongly worded&rdquo;." },
+    { t: "9 hr", html: "A case in <b>Limerick</b> has been held pending supporting evidence regarding weather conditions." },
+    { t: "11 hr", html: "<b>Someone in Kilkenny</b> nominated a queue member for correctly identifying whose turn it was." },
+    { t: "13 hr", html: "Two nominations in <b>Waterford</b> were consolidated after being found to describe the same charger." },
+    { t: "15 hr", html: "Nomination returned to the nominating party for the addition of a date, a place, and any detail at all." },
+    { t: "18 hr", html: "A candidate in <b>Leeds</b> has been recorded as maintaining composure for a fourth consecutive week." },
+    { t: "21 hr", html: "Case referred to the Office of Unnecessarily Thorough Investigation." }
+  ];
+
+  /* ----------------------------------------------------------
+     Archetypal candidates: the standing all-time record. These
+     files are maintained cumulatively rather than per person.
+     ---------------------------------------------------------- */
+  var ARCHETYPES = {
+    a1: {
+      no: "00001", name: "Person Who Returned Your Wallet With Everything Still In It",
+      loc: "Recorded nationally", initials: "RW", title: "The standing file on returned wallets",
+      reason: "Cumulative entry. Returned in full, including the awkward receipt.",
+      act: "Returned a wallet with the cash, the cards and the receipt nobody wanted anybody to see.",
+      count: 41208, status: "Standing record",
+      patronage: "Lost property, pockets and the moment you check your coat again.",
+      witness: "Cumulative testimony from 41,208 nominating parties, none of whom were asked twice.",
+      evidence: "Overwhelming by volume", evidenceClass: "Overwhelming by volume", witnessCount: 41208,
+      miracle: "Not required; the act is held to speak for itself", stage: "Permanent record (closed to further evidence)",
+      officer: "The Registrar, personally",
+      secondary: ["Handed the wallet in rather than posting it.", "Left no name on any of the recorded occasions."],
+      commentary: "The oldest file the Registry holds. It has never been closed and, on current submission rates, never will be.",
+      timeline: [["2019", "File opened"], ["2023", "Ten thousandth entry recorded"], ["2026", "Consolidated as a standing record"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a2: {
+      no: "00002", name: "Person Who Let You Go Ahead With One Item",
+      loc: "Recorded nationally", initials: "OI", title: "The standing file on checkout precedence",
+      reason: "Cumulative entry. Assessed at checkouts, kiosks and counters.",
+      act: "Waved a person with a single item ahead of a full trolley, without discussion.",
+      count: 38471, status: "Standing record",
+      patronage: "Checkouts, kiosks and the small mercy of going first.",
+      witness: "Cumulative. Cashiers are the most frequent nominating party in this category.",
+      evidence: "Consistent across four counties", evidenceClass: "Consistent and unremarkable", witnessCount: 38471,
+      miracle: "Not yet alleged", stage: "Permanent record",
+      officer: "S. Kavanagh, Registry of Ordinary Conduct",
+      secondary: ["Made the offer before being asked.", "Did not sigh at any point during the transaction."],
+      commentary: "The Registry notes that the act costs the candidate approximately ninety seconds and is nominated more often than any act costing more.",
+      timeline: [["2019", "File opened"], ["2024", "Category subdivided by number of items"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a3: {
+      no: "00003", name: "Person Who Said “You Dropped This”",
+      loc: "Recorded nationally", initials: "YD", title: "The standing file on returned belongings",
+      reason: "Cumulative entry. Includes gloves, cards and one passport.",
+      act: "Called after a stranger to return something they had not yet noticed was gone.",
+      count: 33902, status: "Standing record",
+      patronage: "Gloves, bank cards and the three seconds before you would have noticed.",
+      witness: "Cumulative. The passport case remains the most frequently cited.",
+      evidence: "Substantial", evidenceClass: "Substantial", witnessCount: 33902,
+      miracle: "One claim under consideration", stage: "Permanent record",
+      officer: "R. Fahy, Department of Everyday Conduct",
+      secondary: ["Ran a short distance where required.", "Did not wait to be thanked in 61% of recorded cases."],
+      commentary: "The Registry has been unable to establish why this act is so consistently performed by people already late for something.",
+      timeline: [["2019", "File opened"], ["2022", "Passport case recorded"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a4: {
+      no: "00004", name: "Person Who Actually Cleaned The Microwave After Using It",
+      loc: "Workplace category", initials: "CM", title: "The standing file on shared appliances",
+      reason: "Cumulative entry. Verified by absence of evidence.",
+      act: "Cleaned a shared microwave after use, leaving nothing behind by which the act could be traced.",
+      count: 29144, status: "Under permanent assessment",
+      patronage: "Staff kitchens, shared appliances and the people who leave no trace.",
+      witness: "None direct. The category rests entirely on the condition in which appliances are found.",
+      evidence: "Circumstantial by nature", evidenceClass: "Circumstantial by nature", witnessCount: 0,
+      miracle: "Claim downgraded to unusually fortunate coincidence", stage: "Under permanent assessment",
+      officer: "A. Ní Dhonnabháin, Directorate of Domestic Standards",
+      secondary: ["Wiped the turntable, which the Registry regards as the decisive detail.", "Did not raise the matter at the following meeting."],
+      commentary: "The Registry has never identified a single candidate in this category. It regards this as the strongest evidence available that the category is real.",
+      timeline: [["2020", "File opened"], ["2023", "Investigation suspended for want of a suspect"], ["2026", "File retained"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a5: {
+      no: "00005", name: "Person Who Muted The Group Chat Without Announcing Their Departure",
+      loc: "Digital conduct category", initials: "MG", title: "The standing file on quiet withdrawal",
+      reason: "Cumulative entry. Departure inferred, never declared.",
+      act: "Left a group conversation by muting it, without a farewell message, an explanation or a poll.",
+      count: 26730, status: "Standing record",
+      patronage: "Group chats, notifications and leaving without a speech.",
+      witness: "Cumulative. Witnesses are, by definition, unaware of the act.",
+      evidence: "Inferred", evidenceClass: "Inferred", witnessCount: 0,
+      miracle: "Not yet alleged", stage: "Permanent record",
+      officer: "C. Ross, Office of Minor but Remarkable Decency",
+      secondary: ["Continued to read the messages, which the Registry considers generous.", "Replied when directly addressed."],
+      commentary: "The Registry contrasts this category with the announced departure, which is nominated by nobody and reported by several.",
+      timeline: [["2021", "File opened"], ["2024", "Category renamed"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a6: {
+      no: "00006", name: "Person Who Put A New Toilet Roll On The Holder",
+      loc: "Domestic category", initials: "TR", title: "The standing file on holders used as designed",
+      reason: "Cumulative entry. Holder used as intended.",
+      act: "Mounted the replacement on the holder rather than balancing it on the cistern.",
+      count: 24019, status: "Behaviour verified",
+      patronage: "Holders, brackets and fittings used for their designed purpose.",
+      witness: "Cumulative, and unusually strongly worded.",
+      evidence: "Physical; the roll itself", evidenceClass: "Physical and immediate", witnessCount: 24019,
+      miracle: "Not yet alleged", stage: "Behaviour verified",
+      officer: "A. Ní Dhonnabháin, Directorate of Domestic Standards",
+      secondary: ["Disposed of the previous tube.", "Restocked the spare supply in 34% of recorded cases."],
+      commentary: "This category attracts the most emphatic testimony the Registry receives, and the shortest.",
+      timeline: [["2019", "File opened"], ["2023", "Tube disposal recorded as a separate element"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a7: {
+      no: "00007", name: "Person Who Did Not Recline Their Seat On A Short Flight",
+      loc: "Air travel category", initials: "NR", title: "The standing file on upright seating",
+      reason: "Cumulative entry. Sixty-eight minutes, upright throughout.",
+      act: "Declined to recline on a flight of under ninety minutes, in full knowledge of the lever.",
+      count: 21877, status: "Standing record",
+      patronage: "Short-haul flights, tray tables and the knees of the person behind.",
+      witness: "Cumulative. Nominations are almost always submitted by the passenger seated behind.",
+      evidence: "Corroborated", evidenceClass: "Corroborated by the row behind", witnessCount: 21877,
+      miracle: "Under preliminary consideration", stage: "Permanent record",
+      officer: "T. Boyle, Subcommittee on Public Transport Etiquette",
+      secondary: ["Remained upright during the meal service.", "Returned the tray table without being asked."],
+      commentary: "The Registry has considered whether restraint of this kind is a virtue or simply good manners, and has concluded that on a short flight there is no difference.",
+      timeline: [["2020", "File opened"], ["2025", "Threshold set at ninety minutes"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a8: {
+      no: "00008", name: "Person Who Said “No Rush” And Meant It",
+      loc: "Recorded nationally", initials: "NR", title: "The standing file on sincere patience",
+      reason: "Cumulative entry. Sincerity assessed separately in each case.",
+      act: "Said “no rush”, and then demonstrably did not rush anybody.",
+      count: 19560, status: "Witness review",
+      patronage: "Deadlines, waiting rooms and people who mean what they say about time.",
+      witness: "Cumulative. Sincerity is assessed case by case and fails more often than the Registry would like.",
+      evidence: "Mixed", evidenceClass: "Mixed; sincerity contested", witnessCount: 19560,
+      miracle: "Not yet alleged", stage: "Witness review (permanent)",
+      officer: "J. Whelan, Office of Unnecessarily Thorough Investigation",
+      secondary: ["Did not follow up the next morning.", "Did not mention it once the work was delivered."],
+      commentary: "Approximately one third of nominations in this category are rejected on the ground that the candidate did, in fact, rush somebody.",
+      timeline: [["2019", "File opened"], ["2022", "Sincerity test introduced"], ["2026", "Standing record retained"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a9: {
+      no: "00009", name: "Person Who Had A Spare Charger",
+      loc: "Recorded nationally", initials: "SC", title: "The standing file on the correct cable",
+      reason: "Cumulative entry. Correct cable, correct length, offered first.",
+      act: "Produced a charger of the correct type at the moment of need, and offered it before being asked.",
+      count: 17204, status: "Technical verification",
+      patronage: "Emergency chargers, adaptors and the correct connector at the correct moment.",
+      witness: "Cumulative. Recollection of the cable type is unreliable; recollection of the relief is not.",
+      evidence: "Technical", evidenceClass: "Technical verification ongoing", witnessCount: 17204,
+      miracle: "Under preliminary consideration", stage: "Technical verification (permanent)",
+      officer: "R. Fahy, Office of Unnecessarily Thorough Investigation",
+      secondary: ["Did not require the charger back at any particular time.", "Carried the cable for the benefit of others in 22% of recorded cases."],
+      commentary: "The Registry maintains that the carrying of a spare cable is an act of anticipation, and that anticipation is the most under-recorded of the virtues.",
+      timeline: [["2020", "File opened"], ["2024", "Connector types recorded separately"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    },
+    a10: {
+      no: "00010", name: "Person Who Replied “Thanks, Received” To An Important Email",
+      loc: "Workplace category", initials: "TR", title: "The standing file on acknowledged correspondence",
+      reason: "Cumulative entry. Two words, considerable effect.",
+      act: "Acknowledged receipt of an important email, closing a loop nobody else would have closed.",
+      count: 15338, status: "Standing record",
+      patronage: "Acknowledged correspondence and the end of an uncertain afternoon.",
+      witness: "Cumulative. The sender is invariably the nominating party.",
+      evidence: "Documentary and timestamped", evidenceClass: "Documentary and timestamped", witnessCount: 15338,
+      miracle: "Not yet alleged", stage: "Permanent record",
+      officer: "M. Devlin, Office of Minor but Remarkable Decency",
+      secondary: ["Replied on the day of receipt in 71% of recorded cases.", "Acknowledged attachments specifically in 12%."],
+      commentary: "The Registry regards this as the cheapest act in the entire record and, measured by relief produced per word, the most efficient.",
+      timeline: [["2021", "File opened"], ["2025", "Same-day replies recorded separately"], ["2026", "Standing record confirmed"]],
+      next: "None; the file is permanent", completion: "Not applicable"
+    }
+  };
+  Object.keys(ARCHETYPES).forEach(function (k) {
+    ARCHETYPES[k].file = "PCR-STANDING-" + ARCHETYPES[k].no;
+    CANDIDATES[k] = ARCHETYPES[k];
+  });
+
+  RANKINGS.alltime = [
+    { id: "a1", count: 41208, move: { t: "same" } },
+    { id: "a2", count: 38471, move: { t: "same" } },
+    { id: "a3", count: 33902, move: { t: "up", n: 1 } },
+    { id: "a4", count: 29144, move: { t: "up", n: 2 } },
+    { id: "a5", count: 26730, move: { t: "down", n: 1 } },
+    { id: "a6", count: 24019, move: { t: "same" } },
+    { id: "a7", count: 21877, move: { t: "up", n: 3 } },
+    { id: "a8", count: 19560, move: { t: "down", n: 2 } },
+    { id: "a9", count: 17204, move: { t: "same" } },
+    { id: "a10", count: 15338, move: { t: "new" } }
+  ];
+
   var TRENDING = ["michael", "elaine", "passengerEdi"];
 
   /* ==========================================================
@@ -1317,7 +2164,7 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
   var HEADINGS = {
     week: ["Top 10 nominees this week", "Candidates receiving the highest number of verified public nominations during the current reporting period."],
     month: ["Top 10 nominees this month", "Aggregated nominations received since the beginning of the current calendar month."],
-    alltime: ["Top 10 nominees of all time", "Cumulative categories recorded since the registry began keeping records. Individual candidate files are not maintained for archetypal entries."]
+    alltime: ["Top 10 nominees of all time", "Standing records maintained cumulatively since the registry began. Each entry has a permanent file, held open in perpetuity."]
   };
   function selectTab(tab, focusIt) {
     var period = tab.id.replace("tab-", "");
@@ -1411,24 +2258,78 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
     return '<div><dt>' + term + '</dt><dd>' + value + '</dd></div>';
   }
 
+  /* Where a candidate sits on each published index, and how far they moved. */
+  function rankInfo(id) {
+    var found = null;
+    ["week", "month", "alltime"].forEach(function (period) {
+      if (found) return;
+      RANKINGS[period].forEach(function (entry, i) {
+        if (!found && entry.id === id) found = { period: period, rank: i + 1, move: entry.move };
+      });
+    });
+    if (!found) return null;
+    var m = found.move, prev;
+    if (m.t === "new") prev = null;
+    else if (m.t === "up") prev = found.rank + m.n;
+    else if (m.t === "down") prev = found.rank - m.n;
+    else prev = found.rank;
+    found.prev = prev;
+    found.label = found.period === "week" ? "weekly index" : (found.period === "month" ? "monthly index" : "all-time record");
+    return found;
+  }
+
+  function chip(text, cls, spoken) {
+    return '<span class="chip ' + (cls || "") + '"><span aria-hidden="true">' + text + '</span>' +
+      '<span class="vh">' + (spoken || text) + '</span></span>';
+  }
+
   function openCandidate(id, trigger) {
     var c = CANDIDATES[id];
     if (!c) return;
     currentId = id;
     lastTrigger = trigger || null;
-    $("#dlgFile").textContent = c.file;
+    var r = rankInfo(id);
+
+    $("#dlgFile").textContent = c.file + " · Candidate " + (c.no || "unassigned");
     $("#dlgName").textContent = c.name;
-    $("#dlgLoc").textContent = c.loc;
+    $("#dlgLoc").textContent = c.loc + (c.title ? " — " + c.title : "");
     $("#dlgCount").textContent = fmt(c.count);
-    $("#dlgStage").textContent = c.status;
-    $("#dlgEvidence").textContent = c.evidence;
+    $("#dlgWitnesses").textContent = c.witnessCount == null ? "—" : (c.witnessCount === 0 ? "None" : fmt(c.witnessCount));
+    $("#dlgEvidence").textContent = c.evidenceClass || c.evidence;
     $("#dlgCompletion").textContent = c.completion;
+
+    var chips = "";
+    if (r) {
+      chips += chip("Rank " + r.rank, "chip--rank", "Current rank " + r.rank + " on the " + r.label);
+      chips += chip(r.prev ? "Previously " + r.prev : "Not previously listed", "",
+        r.prev ? "Previous rank " + r.prev : "Not previously listed");
+      var m = r.move;
+      if (m.t === "up") chips += chip("↑ " + m.n, "chip--up", "Up " + m.n + " place" + (m.n === 1 ? "" : "s") + " this period");
+      else if (m.t === "down") chips += chip("↓ " + m.n, "chip--down", "Down " + m.n + " place" + (m.n === 1 ? "" : "s") + " this period");
+      else if (m.t === "new") chips += chip("New entry", "chip--rank", "New entry this period");
+      else chips += chip("No change", "", "No change in position this period");
+    }
+    chips += chip(c.status, "", "Status: " + c.status);
+    $("#dlgChips").innerHTML = chips;
+
     $("#dlgDetails").innerHTML =
-      detailRow("Reported act", '<span class="quote">&ldquo;' + esc(c.act) + '&rdquo;</span>') +
+      detailRow("Principal allegation of virtue", '<span class="quote">&ldquo;' + esc(c.act) + '&rdquo;</span>') +
       (c.reveal ? detailRow("Registry note", esc(c.reveal)) : "") +
       detailRow("Proposed patronage", esc(c.patronage)) +
       detailRow("Witness summary", esc(c.witness)) +
-      detailRow("Expected next milestone", esc(c.next));
+      detailRow("Miracle status", esc(c.miracle || "Not yet alleged")) +
+      detailRow("Investigation stage", esc(c.stage || c.status)) +
+      detailRow("Case officer", esc(c.officer || "Unassigned")) +
+      detailRow("Expected next milestone", esc(c.next)) +
+      detailRow("Nominating party",
+        '<span class="redact" aria-hidden="true"></span> <span class="vh">Name withheld.</span>' +
+        '<span class="note" style="display:block;margin-top:4px">Withheld under the Registry&rsquo;s standing policy on nominating parties.</span>');
+
+    $("#dlgActs").innerHTML = (c.secondary || ["None recorded."]).map(function (a) {
+      return "<li>" + esc(a) + "</li>";
+    }).join("");
+    $("#dlgCommentary").textContent = c.commentary || "No commentary has been entered on this file.";
+
     $("#dlgTimeline").innerHTML = c.timeline.map(function (t) {
       return '<li class="tl"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></li>';
     }).join("");
@@ -1751,5 +2652,1517 @@ dialog::backdrop{background:rgba(34,32,29,.55)}
   window.addEventListener("load", observeAll);
 })();
 </script>
+<script>
+/* ==============================================================
+   Case preparation: the fifty-question evidentiary questionnaire,
+   the resulting dossier, and the petition composer.
+   Everything below runs locally. No request is made to anything.
+   ============================================================== */
+(function () {
+  "use strict";
+
+  var d = document;
+  function $(s, c) { return (c || d).querySelector(s); }
+  function $$(s, c) { return Array.prototype.slice.call((c || d).querySelectorAll(s)); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch];
+    });
+  }
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var YND = ["Yes", "No", "Not known"];
+
+  var SECTIONS = [
+    {
+      id: "s1", title: "Candidate identity",
+      blurb: "The Registry must first establish who is being proposed, and how well the nominating party knows them.",
+      questions: [
+        { n: 1, id: "q1", type: "text", required: true, label: "Candidate’s full name",
+          hint: "A full name, a first name, or a description such as “the woman at the bus stop”.",
+          placeholder: "Full name, first name or description" },
+        { n: 2, id: "q2", type: "text", label: "What are they normally called?",
+          hint: "The name actually used by those who know them.", placeholder: "e.g. Peg, Da, Mrs Byrne next door" },
+        { n: 3, id: "q3", type: "text", label: "Approximate age",
+          hint: "An estimate is sufficient. The Registry does not require precision and will not be checking.",
+          placeholder: "e.g. 60s" },
+        { n: 4, id: "q4", type: "text", label: "Town, county and country",
+          placeholder: "e.g. Ennis, County Clare, Ireland" },
+        { n: 5, id: "q5", type: "text", label: "Occupation or former occupation",
+          placeholder: "e.g. retired school principal" },
+        { n: 6, id: "q6", type: "radio", label: "How do you know them?",
+          options: ["Family", "Friend", "Neighbour", "Colleague", "Met once", "Observed from a distance", "Never met them at all"] },
+        { n: 7, id: "q7", type: "text", label: "How long have you known them?",
+          placeholder: "e.g. eleven years, or four minutes at a bus stop" },
+        { n: 8, id: "q8", type: "radio", label: "How would they react if they knew they were being nominated?",
+          hint: "This answer carries evidentiary weight. Candidates who welcome recognition are assessed more slowly.",
+          options: ["Mortified", "Would deny it happened", "Would change the subject", "Would say others deserve it more",
+                    "Would accept graciously", "Would leave the room", "Would be delighted"] }
+      ]
+    },
+    {
+      id: "s2", title: "The central case",
+      blurb: "The principal act relied upon. The Registry considers one act properly evidenced to be worth a great many mentioned in passing.",
+      questions: [
+        { n: 9, id: "q9", type: "text", label: "In one sentence, why should this person be considered?",
+          hint: "One sentence. The Registry has read a great many that were not.",
+          placeholder: "e.g. She has been doing the shopping for the whole road for years and has never said so." },
+        { n: 10, id: "q10", type: "textarea", required: true, label: "Describe the principal act of goodness",
+          hint: "What happened, in your own words. Detail is welcome; the Registry has the time." },
+        { n: 11, id: "q11", type: "text", label: "When did it happen?",
+          hint: "A date, a season, or “some time before Christmas” will suffice.",
+          placeholder: "e.g. a wet Tuesday in March" },
+        { n: 12, id: "q12", type: "text", label: "Where did it happen?",
+          placeholder: "e.g. the car park at the Lidl in Nenagh" },
+        { n: 13, id: "q13", type: "textarea", label: "Who witnessed it?",
+          hint: "Names, descriptions or simply “everybody at the bus stop”." },
+        { n: 14, id: "q14", type: "radio", label: "Was the act planned or spontaneous?",
+          options: ["Entirely spontaneous", "Planned", "Habitual — they always do this", "Unclear, possibly even to the candidate"] },
+        { n: 15, id: "q15", type: "radio", label: "Did the candidate expect recognition?",
+          options: ["No", "Certainly not", "Became visibly uncomfortable when thanked", "Yes, briefly", "Unknown"] },
+        { n: 16, id: "q16", type: "radio", label: "Did the candidate complain while doing it?",
+          options: ["No", "Not audibly", "Once, quietly, about the weather", "Yes", "Complained afterwards, at length"] },
+        { n: 17, id: "q17", type: "radio", label: "Was tea involved?",
+          hint: "The Registry records this on every file.",
+          options: ["Yes", "No", "Tea was offered and declined", "Not relevant"],
+          follow: { when: ["Yes", "Tea was offered and declined"], questions: [
+            { id: "q17a", type: "text", label: "What was provided?", placeholder: "e.g. tea and two biscuits, unprompted" },
+            { id: "q17b", type: "radio", label: "Was it made properly?",
+              options: ["Yes", "Strong, as intended", "It was fine", "It was not, and this has been overlooked"] }
+          ] } },
+        { n: 18, id: "q18", type: "radio", label: "Did the candidate inconvenience themselves in any measurable way?",
+          hint: "The Registry’s standard scale of public inconvenience prevented.",
+          options: ["Minor", "Moderate", "Significant", "Severe", "Ryanair boarding gate"],
+          follow: { when: ["Significant", "Severe", "Ryanair boarding gate"], questions: [
+            { id: "q18a", type: "textarea", label: "Describe the inconvenience sustained",
+              hint: "Missed transport, lost time, weather endured, and so on." }
+          ] } }
+      ]
+    },
+    {
+      id: "s3", title: "Evidence of character",
+      blurb: "A single act may be an accident. The Registry looks for a pattern, ideally an inconvenient one.",
+      questions: [
+        { n: 19, id: "q19", type: "textarea", label: "Give another example of unusual kindness" },
+        { n: 20, id: "q20", type: "textarea", label: "Give an example of exceptional patience",
+          hint: "Patience under provocation is weighted more heavily than patience in comfortable circumstances." },
+        { n: 21, id: "q21", type: "radio", label: "Have they ever helped someone with technology?",
+          options: ["Yes", "Repeatedly", "It is essentially their role in the family", "No"],
+          follow: { when: ["Yes", "Repeatedly", "It is essentially their role in the family"], questions: [
+            { id: "q21a", type: "text", label: "What was the device?", placeholder: "e.g. a printer, a router, an iPad in a leather case" },
+            { id: "q21b", type: "radio", label: "How many times had the same instructions already been given?",
+              options: ["Once", "Two or three times", "More than five", "Every Sunday for several years"] },
+            { id: "q21c", type: "radio", label: "Did the candidate eventually say, “Give it here”?",
+              options: ["No", "Yes, and kindly", "Yes, and it was the correct decision", "They said nothing and simply took it"] },
+            { id: "q21d", type: "radio", label: "Did they say “I told you so”?", options: ["No", "No, and they were entitled to", "Yes"] }
+          ] } },
+        { n: 22, id: "q22", type: "radio", label: "Have they ever fixed something without subsequently mentioning it twenty-seven times?",
+          options: ["Yes", "They mentioned it twice, which the Registry considers reasonable", "No", "Not applicable"] },
+        { n: 23, id: "q23", type: "radio", label: "Have they ever given up a seat?",
+          options: ["Yes", "Yes, repeatedly", "No", "Not known"],
+          follow: { when: ["Yes", "Yes, repeatedly"], questions: [
+            { id: "q23a", type: "text", label: "To whom, and in what circumstances?", placeholder: "e.g. to a man with two bags, on the 46A" },
+            { id: "q23b", type: "radio", label: "Did they pretend they were getting off at the next stop anyway?",
+              options: ["Yes", "No", "Yes, and they were not"] }
+          ] } },
+        { n: 24, id: "q24", type: "radio", label: "Have they ever allowed someone else to go first in a queue?",
+          options: ["Yes", "Yes, and meant it", "No", "Not known"],
+          follow: { when: ["Yes", "Yes, and meant it"], questions: [
+            { id: "q24a", type: "radio", label: "How many items was the other party holding?",
+              options: ["One", "Two or three", "A full trolley, which elevates the act considerably"] }
+          ] } },
+        { n: 25, id: "q25", type: "radio", label: "How do they behave when dealing with customer service?",
+          options: ["Remains polite throughout", "Polite but firm", "Apologises to the person on the phone",
+                    "Says “I know it’s not your fault”", "Escalates, reluctantly", "Loses composure"] },
+        { n: 26, id: "q26", type: "radio", label: "How do they react when somebody says, “It should only take five minutes”?",
+          options: ["Accepts it at face value", "Says nothing, but knows", "Sighs once", "Clears the afternoon", "Has stopped believing it"] },
+        { n: 27, id: "q27", type: "radio", label: "Have they ever returned a shopping trolley properly?",
+          options: ["Yes", "Yes, in poor weather", "Yes, and returned a stranger’s as well", "No"] },
+        { n: 28, id: "q28", type: "radio", label: "Have they ever replied to a message they could easily have ignored?",
+          options: ["Yes", "Yes, the same day", "Yes, with a full answer", "No"] }
+      ]
+    },
+    {
+      id: "s4", title: "Trials and tribulations",
+      blurb: "Virtue is established under conditions. This section records the conditions.",
+      questions: [
+        { n: 29, id: "q29", type: "textarea", label: "What adversity has the candidate endured?",
+          hint: "Whatever they would not describe as adversity themselves." },
+        { n: 30, id: "q30", type: "radio", label: "Has the candidate ever flown with Ryanair?",
+          options: ["Yes", "Yes, repeatedly", "No", "Not known"],
+          follow: { when: ["Yes", "Yes, repeatedly"], questions: [
+            { id: "q30a", type: "radio", label: "Did they attempt to carry a bag of unauthorised dimensions?",
+              options: ["No", "Yes, and succeeded", "Yes, and did not", "They measured it in advance"] },
+            { id: "q30b", type: "radio", label: "Did they remain in their seat until the announcement had finished?",
+              options: ["Yes", "No", "They remained seated and let others out first"] }
+          ] } },
+        { n: 31, id: "q31", type: "radio", label: "Has the candidate survived an airport boarding gate without losing faith in humanity?",
+          options: ["Yes", "Outwardly", "No", "Not applicable"] },
+        { n: 32, id: "q32", type: "radio", label: "Has the candidate dealt with a printer?",
+          options: ["Yes", "Yes, on behalf of somebody else", "No", "Not known"],
+          follow: { when: ["Yes", "Yes, on behalf of somebody else"], questions: [
+            { id: "q32a", type: "radio", label: "Did the printer, at any stage, claim to be out of a colour it was not being asked to use?",
+              options: ["Yes", "No", "Yes, and it was a black and white document"] },
+            { id: "q32b", type: "radio", label: "Was the matter resolved?",
+              options: ["Yes", "No", "The document was emailed to somebody else instead"] }
+          ] } },
+        { n: 33, id: "q33", type: "radio", label: "Has the candidate helped a relative reset a password?",
+          options: ["Yes", "Yes, more than once", "No", "Not known"],
+          follow: { when: ["Yes", "Yes, more than once"], questions: [
+            { id: "q33a", type: "radio", label: "How many times had that password already been reset?",
+              options: ["Once", "Three or four times", "It is reset every time it is used"] },
+            { id: "q33b", type: "text", label: "What was the account?", placeholder: "e.g. an email account opened in 2006" }
+          ] } },
+        { n: 34, id: "q34", type: "radio", label: "Has the candidate attended a committee meeting that should have been an email?",
+          options: ["Yes", "Yes, weekly", "No", "They cancelled it, which is a separate matter"] },
+        { n: 35, id: "q35", type: "radio", label: "Has the candidate endured a software update at an inconvenient moment?",
+          options: ["Yes", "Yes, mid-task", "No", "Not known"] },
+        { n: 36, id: "q36", type: "radio", label: "Has the candidate ever remained polite during any of the above?",
+          options: ["Yes, throughout", "Mostly", "Outwardly", "No, and the Registry regards this as understandable"] }
+      ]
+    },
+    {
+      id: "s5", title: "Witness testimony and evidence",
+      blurb: "The Registry does not require proof. It does, however, require somebody prepared to say so out loud.",
+      questions: [
+        { n: 37, id: "q37", type: "text", label: "Name the strongest available witness",
+          hint: "A name, a role, or a description. Witnesses are not contacted, as the Registry has no means of contacting anybody.",
+          placeholder: "e.g. her sister Anne; the man behind the counter" },
+        { n: 38, id: "q38", type: "textarea", label: "What would that witness probably say?",
+          hint: "In their own words, as best you can recall them." },
+        { n: 39, id: "q39", type: "radio", label: "How reliable is this witness?",
+          options: ["Entirely reliable", "Generally reliable", "Related to the candidate", "Prone to exaggeration",
+                    "Was present but facing the other way"] },
+        { n: 40, id: "q40", type: "radio", label: "Are there independent witnesses?",
+          options: ["Yes", "No", "Unclear"],
+          follow: { when: ["Yes", "Unclear"], questions: [
+            { id: "q40a", type: "text", label: "Approximately how many?", placeholder: "e.g. three commuters" }
+          ] } },
+        { n: 41, id: "q41", type: "radio", label: "Is there documentary evidence?",
+          options: ["Yes", "No", "Possibly, in a drawer"],
+          follow: { when: ["Yes", "Possibly, in a drawer"], questions: [
+            { id: "q41a", type: "checkbox", label: "Classification of evidence held",
+              hint: "Select all that apply. Nothing is uploaded and no document is transmitted.",
+              options: ["Witness statement", "Photograph", "CCTV may exist", "Receipt or documentary evidence",
+                        "Screenshots", "Strongly worded anecdote", "None"] }
+          ] } },
+        { n: 42, id: "q42", type: "radio", label: "Are photographs available?",
+          options: ["Yes", "No", "One, and it is blurred"] },
+        { n: 43, id: "q43", type: "radio", label: "Are screenshots available?",
+          options: ["Yes", "No", "Several, all undated"] },
+        { n: 44, id: "q44", type: "radio", label: "Is the evidence mostly hearsay?",
+          options: ["No", "Partially", "Substantially", "Entirely, and enthusiastically"] },
+        { n: 45, id: "q45", type: "radio", label: "Is there a strongly worded anecdote?",
+          options: ["Yes", "No"],
+          follow: { when: ["Yes"], questions: [
+            { id: "q45a", type: "textarea", label: "Set out the anecdote",
+              hint: "The Registry accepts strongly worded anecdotes as evidence of the second class." }
+          ] } }
+      ]
+    },
+    {
+      id: "s6", title: "Proposed sainthood",
+      blurb: "Finally, the specific recognition sought, and your argument for it.",
+      questions: [
+        { n: 46, id: "q46", type: "text", label: "What should this person become patron saint of?",
+          hint: "Be specific. “Kindness” is already taken and the file is enormous.",
+          placeholder: "e.g. people who answer family technology questions without crying" },
+        { n: 47, id: "q47", type: "text", label: "What object, phrase, habit or item best represents them?",
+          placeholder: "e.g. a flask of tea; the words “ah you will, of course”" },
+        { n: 48, id: "q48", type: "text", label: "What annual feast day would you propose?",
+          hint: "A date, and shortly you will be asked why.", placeholder: "e.g. 14 November" ,
+          follow: { when: "any", questions: [
+            { id: "q48a", type: "textarea", label: "Why that date?", placeholder: "e.g. it is the day the immersion was left on and nothing was said about it" }
+          ] } },
+        { n: 49, id: "q49", type: "text", label: "What miracle would you reasonably expect them to perform?",
+          hint: "Reasonably. The Registry has an eight-thousand-case backlog of the unreasonable kind.",
+          placeholder: "e.g. pairing a Bluetooth speaker on the first attempt" },
+        { n: 50, id: "q50", type: "textarea", label: "Your final argument to the Registry",
+          hint: "Why this case deserves consideration ahead of the current several-century backlog." },
+        { id: "consent", type: "checkbox", required: true, label: "Acknowledgement",
+          options: ["I understand that this is a parody nomination and that no real canonisation process will take place."] }
+      ]
+    }
+  ];
+
+  var TOTAL = 50;
+
+  /* ==========================================================
+     State and local persistence
+     ========================================================== */
+  var STORE = "pcr.case.v1";
+  var state = { answers: {}, step: 0, ref: "", updated: 0 };
+
+  function newRef() {
+    return "PCR/CP-" + String(Math.floor(Math.random() * 8999) + 1000);
+  }
+  function load() {
+    try {
+      var raw = window.localStorage.getItem(STORE);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || !parsed.answers) return null;
+      return parsed;
+    } catch (e) { return null; }
+  }
+  var saveTimer = null;
+  function save(immediate) {
+    state.updated = Date.now();
+    function write() {
+      try { window.localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+      var t = new Date();
+      var stamp = String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
+      var el = $("#wizSaved");
+      if (el) el.textContent = "Saved locally at " + stamp;
+    }
+    if (immediate) { clearTimeout(saveTimer); write(); return; }
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(write, 400);
+  }
+  function clearStore() {
+    try { window.localStorage.removeItem(STORE); } catch (e) { /* nothing to remove */ }
+  }
+
+  /* ==========================================================
+     Question rendering
+     ========================================================== */
+  function val(id) {
+    var v = state.answers[id];
+    if (v == null) return "";
+    return Array.isArray(v) ? v.join(", ") : String(v);
+  }
+  function answered(q) {
+    var v = state.answers[q.id];
+    if (v == null) return false;
+    if (Array.isArray(v)) return v.length > 0;
+    return String(v).trim().length > 0;
+  }
+
+  function questionHTML(q, follow) {
+    var num = q.n ? '<span class="q__n">Question ' + q.n + ' of ' + TOTAL + '</span>' : "";
+    var hint = q.hint ? '<span class="hint" id="' + q.id + '-hint">' + esc(q.hint) + "</span>" : "";
+    var describe = (q.hint ? q.id + "-hint " : "") + q.id + "-err";
+    var err = '<span class="err" id="' + q.id + '-err"></span>';
+    var stored = state.answers[q.id];
+
+    if (q.type === "radio" || q.type === "checkbox") {
+      var multi = q.type === "checkbox";
+      var chosen = Array.isArray(stored) ? stored : (stored ? [stored] : []);
+      var opts = q.options.map(function (o, i) {
+        var on = chosen.indexOf(o) > -1;
+        return '<label class="choice"><input type="' + (multi ? "checkbox" : "radio") + '" name="' + q.id + '" ' +
+          'id="' + q.id + "-" + i + '" value="' + esc(o) + '"' + (on ? " checked" : "") + '> <span>' + esc(o) + "</span></label>";
+      }).join("");
+      var cols = q.options.length > 4 ? "choices--2" : (q.options.length === 1 ? "" : "choices--2");
+      return '<fieldset class="q" id="' + q.id + '-field">' +
+        '<legend class="legend">' + num + esc(q.label) + (q.required ? " (required)" : "") + "</legend>" +
+        hint +
+        '<div class="choices ' + cols + '"' + (q.hint ? ' aria-describedby="' + q.id + '-hint"' : "") + ">" + opts + "</div>" +
+        err + followHTML(q) + "</fieldset>";
+    }
+
+    var control;
+    if (q.type === "textarea") {
+      control = '<textarea id="' + q.id + '" name="' + q.id + '" rows="4" aria-describedby="' + describe + '"' +
+        (q.placeholder ? ' placeholder="' + esc(q.placeholder) + '"' : "") + ">" + esc(val(q.id)) + "</textarea>";
+    } else {
+      control = '<input type="text" id="' + q.id + '" name="' + q.id + '" autocomplete="off" ' +
+        'value="' + esc(val(q.id)) + '" aria-describedby="' + describe + '"' +
+        (q.placeholder ? ' placeholder="' + esc(q.placeholder) + '"' : "") + ">";
+    }
+    return '<div class="q" id="' + q.id + '-field">' +
+      '<label for="' + q.id + '">' + num + esc(q.label) + (q.required ? " (required)" : "") + "</label>" +
+      hint + control + err + followHTML(q) + "</div>";
+  }
+
+  function followHTML(q) {
+    if (!q.follow) return "";
+    var show = followVisible(q);
+    return '<div class="follow" id="' + q.id + '-follow"' + (show ? "" : " hidden") + ">" +
+      '<p class="follow__label">Supplementary questions arising from your answer</p>' +
+      q.follow.questions.map(function (f) { return questionHTML(f, true); }).join("") +
+      "</div>";
+  }
+  function followVisible(q) {
+    if (!q.follow) return false;
+    var v = state.answers[q.id];
+    if (q.follow.when === "any") return v != null && String(v).trim().length > 0;
+    if (v == null) return false;
+    var vals = Array.isArray(v) ? v : [v];
+    return vals.some(function (x) { return q.follow.when.indexOf(x) > -1; });
+  }
+
+  function eachQuestion(fn, includeFollows) {
+    SECTIONS.forEach(function (sec, si) {
+      sec.questions.forEach(function (q) {
+        fn(q, sec, si);
+        if (includeFollows && q.follow) q.follow.questions.forEach(function (f) { fn(f, sec, si); });
+      });
+    });
+  }
+  function findQuestion(id) {
+    var found = null;
+    eachQuestion(function (q, sec, si) { if (q.id === id) found = { q: q, sec: sec, step: si }; }, true);
+    return found;
+  }
+
+  /* ==========================================================
+     Step rendering and navigation
+     ========================================================== */
+  var stepHost = $("#wizStep");
+
+  function renderStep(moveFocus) {
+    var sec = SECTIONS[state.step];
+    var nums = sec.questions.filter(function (q) { return q.n; }).map(function (q) { return q.n; });
+    var range = nums.length ? "Questions " + nums[0] + " to " + nums[nums.length - 1] + " of " + TOTAL : "";
+    stepHost.innerHTML =
+      '<div class="step-head">' +
+        '<p class="eyebrow">Section ' + (state.step + 1) + " of " + SECTIONS.length + "</p>" +
+        '<h3 id="stepHeading" tabindex="-1">' + esc(sec.title) + "</h3>" +
+        "<p>" + esc(sec.blurb) + (range ? " " + range + "." : "") + "</p>" +
+      "</div>" +
+      sec.questions.map(function (q) { return questionHTML(q, false); }).join("");
+
+    $("#wizPrev").disabled = state.step === 0;
+    $("#wizNext").textContent = state.step === SECTIONS.length - 1
+      ? "Complete preliminary assessment"
+      : "Continue to section " + (state.step + 2);
+    updateProgress();
+    $("#wizLive").textContent = "Section " + (state.step + 1) + " of " + SECTIONS.length + ", " +
+      sec.title + ". " + range + ".";
+    if (moveFocus !== false) $("#stepHeading").focus();
+  }
+
+  function collect() {
+    var sec = SECTIONS[state.step];
+    function read(q) {
+      var el;
+      if (q.type === "radio") {
+        el = $('input[name="' + q.id + '"]:checked', stepHost);
+        state.answers[q.id] = el ? el.value : "";
+      } else if (q.type === "checkbox") {
+        state.answers[q.id] = $$('input[name="' + q.id + '"]:checked', stepHost).map(function (i) { return i.value; });
+      } else {
+        el = $("#" + q.id, stepHost);
+        if (el) state.answers[q.id] = el.value;
+      }
+      if (q.follow) q.follow.questions.forEach(read);
+    }
+    sec.questions.forEach(read);
+  }
+
+  function countAnswered() {
+    var n = 0;
+    eachQuestion(function (q) { if (q.n && answered(q)) n++; });
+    return n;
+  }
+
+  function updateProgress() {
+    var n = countAnswered();
+    var sec = SECTIONS[state.step];
+    $("#wizStepText").textContent = "Section " + (state.step + 1) + " of " + SECTIONS.length + " — " + sec.title;
+    $("#wizCountText").textContent = "Questions answered: " + n + " of " + TOTAL;
+    var bar = $("#wizBar");
+    bar.setAttribute("aria-valuenow", String(n));
+    bar.setAttribute("aria-valuetext", n + " of " + TOTAL + " questions answered");
+    $("i", bar).style.width = Math.round((n / TOTAL) * 100) + "%";
+    if (state.ref) $("#wizRef").textContent = state.ref;
+  }
+
+  function refreshFollows() {
+    SECTIONS[state.step].questions.forEach(function (q) {
+      if (!q.follow) return;
+      var box = $("#" + q.id + "-follow", stepHost);
+      if (box) box.hidden = !followVisible(q);
+    });
+  }
+
+  $("#wizForm").addEventListener("input", function () { collect(); refreshFollows(); updateProgress(); save(); });
+  $("#wizForm").addEventListener("change", function () { collect(); refreshFollows(); updateProgress(); save(); });
+  $("#wizForm").addEventListener("submit", function (e) { e.preventDefault(); });
+
+  function clearFieldError(id) {
+    var err = $("#" + id + "-err");
+    if (err) err.textContent = "";
+    var field = $("#" + id + "-field");
+    if (field) field.classList.remove("has-error");
+    var input = $("#" + id, stepHost);
+    if (input) input.removeAttribute("aria-invalid");
+  }
+
+  function showErrors(list) {
+    var box = $("#wizErrors");
+    if (!list.length) { box.hidden = true; return false; }
+    $("#wizErrList").innerHTML = list.map(function (e) {
+      return '<li><a href="#' + e.target + '">' + esc(e.message) + "</a></li>";
+    }).join("");
+    box.hidden = false;
+    list.forEach(function (e) {
+      var err = $("#" + e.id + "-err");
+      if (err) err.textContent = e.message;
+      var input = $("#" + e.id, stepHost);
+      if (input && input.tagName !== "FIELDSET") input.setAttribute("aria-invalid", "true");
+    });
+    box.focus();
+    return true;
+  }
+
+  function validateStep() {
+    var errs = [];
+    SECTIONS[state.step].questions.forEach(function (q) {
+      clearFieldError(q.id);
+      if (!q.required) return;
+      if (!answered(q)) {
+        errs.push({
+          id: q.id,
+          target: q.type === "radio" || q.type === "checkbox" ? q.id + "-0" : q.id,
+          message: q.id === "consent"
+            ? "The acknowledgement must be ticked before the assessment can be completed."
+            : "Question " + (q.n || "") + ": " + q.label + " is required by the Registry."
+        });
+      }
+    });
+    return errs;
+  }
+
+  function validateAll() {
+    var errs = [];
+    SECTIONS.forEach(function (sec, si) {
+      sec.questions.forEach(function (q) {
+        if (q.required && !answered(q)) {
+          errs.push({ step: si, id: q.id, label: q.label, n: q.n });
+        }
+      });
+    });
+    return errs;
+  }
+
+  function goStep(i, focus) {
+    state.step = Math.max(0, Math.min(SECTIONS.length - 1, i));
+    $("#wizErrors").hidden = true;
+    renderStep(focus !== false);
+    save();
+    var w = $("#wizard");
+    if (w.getBoundingClientRect().top < 0) w.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  }
+
+  $("#wizPrev").addEventListener("click", function () { collect(); goStep(state.step - 1); });
+
+  $("#wizNext").addEventListener("click", function () {
+    collect();
+    if (showErrors(validateStep())) return;
+    if (state.step < SECTIONS.length - 1) { goStep(state.step + 1); return; }
+    var missing = validateAll();
+    if (missing.length) {
+      var first = missing[0];
+      state.step = first.step;
+      renderStep(false);
+      showErrors(missing.map(function (m) {
+        return {
+          id: m.id,
+          target: m.id === "consent" ? "consent-0" : m.id,
+          message: (m.n ? "Question " + m.n + ": " : "") + m.label + " must be completed before the assessment can conclude."
+        };
+      }));
+      return;
+    }
+    save(true);
+    completeAssessment();
+  });
+
+  $("#wizSave").addEventListener("click", function () {
+    collect();
+    save(true);
+    showRoute("chooser");
+    refreshResumePanel();
+    $("#resumeDetail").textContent = "Saved. " + countAnswered() + " of " + TOTAL +
+      " questions answered, at section " + (state.step + 1) + " of " + SECTIONS.length +
+      ". The dossier is held in this browser under reference " + state.ref + ".";
+    $("#resumePanel").hidden = false;
+    $("#resumePanel").querySelector("h3").setAttribute("tabindex", "-1");
+    $("#resumePanel").querySelector("h3").focus();
+  });
+
+  $("#wizReset").addEventListener("click", function () {
+    if (!window.confirm("Start the case preparation again? All fifty answers held in this browser will be discarded.")) return;
+    clearStore();
+    state = { answers: {}, step: 0, ref: newRef(), updated: 0 };
+    $("#wizSaved").textContent = "Not yet saved";
+    goStep(0);
+  });
+
+  /* ==========================================================
+     Assessment: deriving the Registry's own metadata
+     ========================================================== */
+  var A = function (id) {
+    var v = state.answers[id];
+    if (v == null) return "";
+    return Array.isArray(v) ? v.join(", ") : String(v).trim();
+  };
+  function has(id, list) { return list.indexOf(A(id)) > -1; }
+
+  function hash(str) {
+    var h = 0, i;
+    for (i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+                "August", "September", "October", "November", "December"];
+  var OFFICERS = [
+    "M. Devlin, Office of Minor but Remarkable Decency",
+    "R. Fahy, Department of Everyday Conduct",
+    "A. Ní Dhonnabháin, Directorate of Domestic Standards",
+    "J. Whelan, Office of Unnecessarily Thorough Investigation",
+    "T. Boyle, Subcommittee on Public Transport Etiquette",
+    "S. Kavanagh, Registry of Ordinary Conduct"
+  ];
+
+  function evidenceScore() {
+    var s = 0;
+    if (A("q40") === "Yes") s += 2;
+    if (A("q41") === "Yes") s += 2; else if (A("q41") === "Possibly, in a drawer") s += 1;
+    if (A("q42") === "Yes") s += 1; else if (A("q42") === "One, and it is blurred") s += 0.5;
+    if (A("q43") === "Yes") s += 1; else if (A("q43") === "Several, all undated") s += 0.5;
+    if (A("q45") === "Yes") s += 1;
+    if (A("q44") === "Entirely, and enthusiastically") s -= 2;
+    else if (A("q44") === "Substantially") s -= 1;
+    else if (A("q44") === "No") s += 1;
+    if (A("q39") === "Entirely reliable") s += 2;
+    else if (A("q39") === "Generally reliable") s += 1;
+    else if (A("q39") === "Prone to exaggeration") s -= 1;
+    else if (A("q39") === "Was present but facing the other way") s -= 1;
+    if (A("q13")) s += 0.5;
+    return s;
+  }
+  function evidenceLabel(s) {
+    if (s >= 6) return "Unusually compelling";
+    if (s >= 4) return "Moderately convincing";
+    if (s >= 2) return "Corroborated in part";
+    if (s >= 0.5) return "Largely anecdotal";
+    return "Evidence mostly anecdotal";
+  }
+  function witnessNumber() {
+    var raw = A("q40a");
+    var m = raw.match(/\d+/);
+    if (m) return parseInt(m[0], 10);
+    var words = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+    var k;
+    for (k in words) { if (raw.toLowerCase().indexOf(k) > -1) return words[k]; }
+    if (A("q40") === "Yes") return 2;
+    if (A("q37")) return 1;
+    return 0;
+  }
+  function characterScore() {
+    var s = 0;
+    ["q21", "q23", "q24", "q27", "q28"].forEach(function (id) { if (A(id) && A(id) !== "No" && A(id) !== "Not known") s += 1; });
+    if (A("q22") === "Yes") s += 1;
+    if (has("q25", ["Remains polite throughout", "Apologises to the person on the phone", "Says “I know it’s not your fault”"])) s += 1;
+    if (has("q15", ["No", "Certainly not", "Became visibly uncomfortable when thanked"])) s += 1;
+    if (has("q16", ["No", "Not audibly"])) s += 1;
+    if (has("q8", ["Mortified", "Would deny it happened", "Would change the subject", "Would say others deserve it more", "Would leave the room"])) s += 1;
+    if (has("q36", ["Yes, throughout", "Mostly"])) s += 1;
+    ["q30", "q31", "q32", "q33", "q34", "q35"].forEach(function (id) { if (A(id) && A(id).indexOf("Yes") === 0) s += 0.5; });
+    if (A("q19")) s += 1;
+    if (A("q20")) s += 1;
+    if (A("q29")) s += 1;
+    return s;
+  }
+  function teaConfirmed() { return has("q17", ["Yes", "Tea was offered and declined"]); }
+
+  function strengthAssessment() {
+    var ev = evidenceScore(), ch = characterScore(), answeredN = countAnswered();
+    var total = ev + ch + answeredN / 10;
+    var rating, note;
+    if (ev <= 0.5 && ch >= 4) { rating = "Evidence Mostly Anecdotal"; note = "The character of the candidate is not in doubt. The paperwork is."; }
+    else if (!teaConfirmed() && total >= 6 && total < 11) { rating = "Further Tea Required"; note = "The case is sound but the file records no tea, and the Subcommittee will ask."; }
+    else if (total >= 15) { rating = "Suspiciously Decent Human Being"; note = "The Registry has reviewed the file twice and can find nothing wrong with this person."; }
+    else if (total >= 12) { rating = "Disturbingly Virtuous"; note = "The pattern of conduct is sustained, unprompted and, in places, difficult to explain."; }
+    else if (total >= 9) { rating = "Sufficiently Impressive to Reach Subcommittee"; note = "The case meets the threshold for consideration by a body which meets rarely."; }
+    else if (total >= 6) { rating = "Formally Promising"; note = "The Registry considers the case promising in the formal sense, which is the only sense available to it."; }
+    else { rating = "Promising"; note = "An opening case. Further evidence would assist, as would a witness prepared to say something out loud."; }
+    return { rating: rating, note: note, ev: ev, ch: ch, total: total, pct: Math.max(8, Math.min(100, Math.round((total / 18) * 100))) };
+  }
+
+  function buildCase() {
+    var name = A("q1") || "The candidate";
+    var h = hash(name + "|" + A("q4") + "|" + state.ref);
+    var ev = evidenceScore();
+    var st = strengthAssessment();
+    return {
+      name: name,
+      known: A("q2"),
+      no: String(400 + (h % 560)).padStart(5, "0"),
+      ref: "PCR-2026-0" + String(1000 + (h % 8999)).slice(0, 4),
+      loc: A("q4") || "Location not stated",
+      when: A("q11"), where: A("q12"),
+      patronage: A("q46") || "To be determined by the Registry",
+      principal: A("q10") || A("q9") || "Not stated",
+      oneLine: A("q9"),
+      evidence: evidenceLabel(ev),
+      witnesses: witnessNumber(),
+      miracle: A("q49") || "None yet alleged",
+      reviewDate: (1 + (h % 27)) + " " + MONTHS[h % 12] + " " + (2400 + (h % 84)),
+      officer: OFFICERS[h % OFFICERS.length],
+      stage: "Referral to the Office of Unnecessarily Thorough Investigation",
+      strength: st,
+      feast: A("q48"), feastWhy: A("q48a"), object: A("q47"), argument: A("q50"),
+      answeredN: countAnswered()
+    };
+  }
+
+  /* ==========================================================
+     The compiled dossier
+     ========================================================== */
+  function scheduleHTML() {
+    return SECTIONS.map(function (sec) {
+      var rows = [];
+      sec.questions.forEach(function (q) {
+        if (q.id === "consent") return;
+        if (answered(q)) rows.push('<div class="qa"><dt>' + (q.n ? q.n + ". " : "") + esc(q.label) + "</dt><dd>" + esc(val(q.id)) + "</dd></div>");
+        if (q.follow && followVisible(q)) {
+          q.follow.questions.forEach(function (f) {
+            if (answered(f)) rows.push('<div class="qa"><dt>— ' + esc(f.label) + "</dt><dd>" + esc(val(f.id)) + "</dd></div>");
+          });
+        }
+      });
+      if (!rows.length) return "";
+      return "<h4>" + esc(sec.title) + "</h4><dl class=\"answers\">" + rows.join("") + "</dl>";
+    }).join("");
+  }
+
+  function field(term, value, big) {
+    return '<div class="dfield"><dt>' + term + "</dt><dd>" + (big ? "<b>" + value + "</b>" : value) + "</dd></div>";
+  }
+
+  function para(term, value) {
+    if (!value) return "";
+    return "<h4>" + esc(term) + "</h4><p>" + esc(value) + "</p>";
+  }
+
+  var CASE = null;
+
+  function completeAssessment() {
+    CASE = buildCase();
+    var c = CASE, s = c.strength;
+
+    $("#caseReview").innerHTML =
+      '<div class="dossier" id="dossier">' +
+        '<p class="dossier__band"><b>Preliminary assessment complete</b>' +
+          "<span>Reference " + esc(c.ref) + " · Prepared " + new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) + "</span></p>" +
+        '<div class="dossier__head">' +
+          '<div class="stamp stamp--right" role="img" aria-label="Registry stamp: referred to the Office of Unnecessarily Thorough Investigation">' +
+            "<b>Referred</b><span>Office of Unnecessarily<br>Thorough Investigation</span></div>" +
+          '<p class="dossier__no">Candidate ' + esc(c.no) + "</p>" +
+          '<h2 class="dossier__name" id="dossierHeading" tabindex="-1">' + esc(c.name) + "</h2>" +
+          '<p class="dossier__sub">' + esc(c.loc) + (c.known ? " · known to those around them as " + esc(c.known) : "") + "</p>" +
+          '<p style="margin-top:18px;max-width:62ch">The candidate has met the evidentiary threshold for referral to the Office of Unnecessarily Thorough Investigation. ' +
+            "The file below has been compiled from your answers and is held in this browser only.</p>" +
+        "</div>" +
+
+        '<dl class="dossier__grid">' +
+          field("Case reference", esc(c.ref)) +
+          field("Proposed patronage", esc(c.patronage)) +
+          field("Evidence strength", esc(c.evidence)) +
+          field("Independent witnesses", c.witnesses ? String(c.witnesses) : "None enumerated", true) +
+          field("Miracle under investigation", esc(c.miracle)) +
+          field("Projected review date", esc(c.reviewDate)) +
+          field("Case officer", esc(c.officer)) +
+          field("Investigation stage", esc(c.stage)) +
+          field("Questions answered", c.answeredN + " of " + TOTAL, true) +
+        "</dl>" +
+
+        '<div class="dossier__section">' +
+          "<h3>Assessed case strength</h3>" +
+          '<div class="strength">' +
+            '<p class="strength__v">' + esc(s.rating) + "</p>" +
+            '<div class="strength__meter" aria-hidden="true"><i style="width:' + s.pct + '%"></i></div>' +
+            "<p class=\"note\">" + esc(s.note) + "</p>" +
+            "<ul>" +
+              "<li>Evidence classification: " + esc(c.evidence) + ".</li>" +
+              "<li>Independent witnesses recorded: " + (c.witnesses || "none") + ".</li>" +
+              "<li>Tea: " + (teaConfirmed() ? "confirmed" : "not recorded on this file") + ".</li>" +
+              "<li>Inconvenience sustained: " + esc(A("q18") || "not stated") + ".</li>" +
+              "<li>Candidate’s anticipated reaction to this nomination: " + esc(A("q8") || "not stated") + ".</li>" +
+            "</ul>" +
+          "</div>" +
+        "</div>" +
+
+        '<div class="dossier__section">' +
+          "<h3>Principal allegation of virtue</h3>" +
+          "<p>" + esc(c.principal) + "</p>" +
+          para("Circumstances", [A("q11"), A("q12")].filter(Boolean).join(" · ")) +
+          para("Character of the act", [A("q14"), A("q15") ? "Recognition: " + A("q15") : "", A("q16") ? "Complaint: " + A("q16") : ""].filter(Boolean).join(" · ")) +
+          para("Proposed feast day", c.feast ? c.feast + (c.feastWhy ? " — " + c.feastWhy : "") : "") +
+          para("Representative object or phrase", c.object) +
+          para("Final argument submitted by the nominating party", c.argument) +
+        "</div>" +
+
+        '<div class="dossier__section">' +
+          "<h3>Schedule of answers</h3>" +
+          '<p class="note" style="margin-bottom:16px">Every answer recorded, in the order in which the Registry asked for it.</p>' +
+          scheduleHTML() +
+        "</div>" +
+
+        '<div class="dossier__foot">' +
+          '<h3 style="margin-top:0">Next steps</h3>' +
+          "<p>The Registry cannot forward this case, having no means of doing so. A formal petition may, however, be prepared here and sent by you from your own email application.</p>" +
+          '<div class="btn-row">' +
+            '<button class="btn btn--primary" type="button" id="startCompose">Prepare formal petition by email</button>' +
+            '<button class="btn btn--secondary" type="button" id="amendCase">Amend the dossier</button>' +
+            '<button class="btn btn--ghost" type="button" id="freshCase">Begin a new case</button>' +
+          "</div>" +
+        "</div>" +
+
+        '<div class="compose" id="compose" hidden></div>' +
+      "</div>";
+
+    showRoute("review");
+    renderCompose();
+    $("#dossierHeading").focus();
+    $("#startCompose").addEventListener("click", function () {
+      var box = $("#compose");
+      box.hidden = false;
+      $("#composeHeading").focus();
+    });
+    $("#amendCase").addEventListener("click", function () {
+      showRoute("case");
+      goStep(state.step);
+    });
+    $("#freshCase").addEventListener("click", function () {
+      if (!window.confirm("Begin a new case? The dossier held in this browser will be discarded.")) return;
+      clearStore();
+      state = { answers: {}, step: 0, ref: newRef(), updated: 0 };
+      CASE = null;
+      showRoute("case");
+      $("#wizSaved").textContent = "Not yet saved";
+      goStep(0);
+    });
+  }
+
+  /* ==========================================================
+     Petition composer — narrative assembled locally from the
+     answers. No model, no service, no request of any kind.
+     ========================================================== */
+
+  /* The Registry publishes no address of its own. A destination may be
+     configured here; otherwise the nominating party supplies one. */
+  var DEFAULT_RECIPIENT = "";
+  var RECIPIENT_KEY = "pcr.recipient.v1";
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function lower1(s) { return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
+  function stop(s) {
+    if (!s) return "";
+    s = String(s).trim();
+    return /[.!?…]$/.test(s) ? s : s + ".";
+  }
+  function joinList(items) {
+    items = items.filter(Boolean);
+    if (items.length < 2) return items[0] || "";
+    return items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
+  }
+
+  /* --- plain statements of fact, drawn from the answers ------- */
+  var RELATION = {
+    "Family": "a member of the family",
+    "Friend": "a friend",
+    "Neighbour": "a neighbour",
+    "Colleague": "a colleague",
+    "Met once": "somebody met once",
+    "Observed from a distance": "somebody observed from a distance",
+    "Never met them at all": "a person they have never met"
+  };
+  var PLANNED = {
+    "Entirely spontaneous": "The act was entirely spontaneous.",
+    "Planned": "The act was planned in advance.",
+    "Habitual — they always do this": "The act is habitual; the candidate always does this.",
+    "Unclear, possibly even to the candidate": "Whether the act was planned is unclear, possibly even to the candidate."
+  };
+  var EXPECTED = {
+    "No": "No recognition was expected.",
+    "Certainly not": "No recognition was expected, and the point is made firmly.",
+    "Became visibly uncomfortable when thanked": "The candidate became visibly uncomfortable on being thanked.",
+    "Yes, briefly": "Some brief recognition was expected.",
+    "Unknown": "Whether recognition was expected is not known."
+  };
+  var COMPLAINED = {
+    "No": "No complaint was made at any point.",
+    "Not audibly": "No complaint was made audibly.",
+    "Once, quietly, about the weather": "One remark was made, quietly, concerning the weather.",
+    "Yes": "The candidate complained during the act.",
+    "Complained afterwards, at length": "The candidate complained afterwards, at length."
+  };
+  var EVIDENCE_CLASS = {
+    "Witness statement": "a witness statement",
+    "Photograph": "a photograph",
+    "CCTV may exist": "CCTV which may exist",
+    "Receipt or documentary evidence": "a receipt or other documentary evidence",
+    "Screenshots": "screenshots",
+    "Strongly worded anecdote": "a strongly worded anecdote"
+  };
+
+  function whenPhrase(w) {
+    if (!w) return "";
+    return /^(on|in|at|during|last|early|late|some|the|one)\b/i.test(w.trim()) ? w.trim() : "on " + w.trim();
+  }
+  function capitalise(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function quoted(s) {
+    var t = String(s).trim().replace(/^["“']+|["”']+$/g, "");
+    return "“" + t + "”";
+  }
+
+  function identityFacts(f, withPlace) {
+    var out = [];
+    if (f.occupation) {
+      var occ = f.occupation.replace(/^(a|an|the)\s+/i, "");
+      out.push(stop(f.name + " is " + (/^[aeiou]/i.test(occ) ? "an " : "a ") + occ +
+        (withPlace !== false && f.place ? ", of " + f.place : "")));
+    } else if (withPlace !== false && f.place) {
+      out.push(stop(f.name + " is of " + f.place));
+    }
+    if (f.relation) {
+      var rel = RELATION[f.relation] || lower1(f.relation);
+      out.push(stop("The nominating party has known the candidate as " + rel + (f.howLong ? " for " + f.howLong : "")));
+    }
+    if (f.age) out.push(stop("The candidate is understood to be in their " + f.age.replace(/^in (their|the)\s+/i, "")));
+    if (f.reaction) out.push(stop("Were the candidate to learn of this petition, the expectation is that they would be " +
+      lower1(f.reaction).replace(/^would\s+/, "")));
+    return out.join(" ");
+  }
+
+  function actFacts(f, skipTimePlace) {
+    var out = [];
+    var when = skipTimePlace ? "" : whenPhrase(f.when);
+    if (when && f.where) out.push(stop("It took place " + when + ", at " + f.where));
+    else if (when) out.push(stop("It took place " + when));
+    else if (f.where && !skipTimePlace) out.push(stop("It took place at " + f.where));
+    if (f.whoSaw) out.push(stop("Witnessed by " + lower1(f.whoSaw)));
+    if (f.planned) out.push(PLANNED[f.planned] || stop(f.planned));
+    if (f.expected) out.push(EXPECTED[f.expected] || stop(f.expected));
+    if (f.complained) out.push(COMPLAINED[f.complained] || stop(f.complained));
+    if (f.inconvenience) {
+      out.push("Public inconvenience prevented is assessed by the Registry at the level of " + quoted(f.inconvenience) + ".");
+    }
+    if (f.inconvenienceDesc) out.push(stop(f.inconvenienceDesc));
+    if (f.tea === "Yes") {
+      out.push(stop("Tea was involved" + (f.teaWhat ? ": " + f.teaWhat : "") +
+        (f.teaMade && f.teaMade !== "It was fine" ? ", and it was made " + lower1(f.teaMade).replace(/^yes$/, "properly") : "")));
+    } else if (f.tea === "Tea was offered and declined") {
+      out.push("Tea was offered and declined, which the Registry records without further comment.");
+    }
+    return out.join(" ");
+  }
+
+  function characterFacts(f) {
+    var out = [];
+    if (f.kindness) out.push(stop("A further instance of kindness is recorded: " + lower1(stop(f.kindness))));
+    if (f.patience) out.push(stop("On patience, the following is submitted: " + lower1(stop(f.patience))));
+    if (f.tech && f.tech !== "No") {
+      var t = "The candidate has provided technical assistance to others";
+      if (f.device) t += ", the device in question being " + f.device;
+      if (f.timesTold) t += ". The same instructions had already been given " + lower1(f.timesTold);
+      out.push(stop(t));
+      if (f.giveItHere && f.giveItHere !== "No") {
+        out.push(stop("As to whether the candidate eventually said “Give it here”: " + lower1(f.giveItHere)));
+      }
+      if (f.toldYouSo === "No, and they were entitled to") {
+        out.push("The candidate did not say “I told you so”, and was entitled to.");
+      } else if (f.toldYouSo === "No") {
+        out.push("The candidate did not say “I told you so”.");
+      }
+    }
+    if (f.fixed === "Yes") out.push("The candidate has repaired something and did not raise it afterwards.");
+    else if (f.fixed === "They mentioned it twice, which the Registry considers reasonable") {
+      out.push("The candidate has repaired something and mentioned it twice, which the Registry considers reasonable.");
+    }
+    if (f.seat && f.seat.indexOf("Yes") === 0) {
+      out.push(stop("A seat has been surrendered" + (f.seatWho ? ", " + lower1(f.seatWho) : "") +
+        (f.seatPretend === "Yes, and they were not" ? ", the candidate having indicated that they were alighting shortly, which they were not" : "")));
+    }
+    if (f.queue && f.queue.indexOf("Yes") === 0) {
+      out.push(stop("Position in a queue has been ceded" + (f.queueItems ? ", the other party holding " + lower1(f.queueItems) : "") +
+        (f.queue === "Yes, and meant it" ? ", and the candidate meant it" : "")));
+    }
+    if (f.trolley && f.trolley.indexOf("Yes") === 0) {
+      out.push(stop("A shopping trolley has been returned properly" +
+        (f.trolley === "Yes, in poor weather" ? ", in poor weather" :
+         f.trolley === "Yes, and returned a stranger’s as well" ? ", together with a stranger’s" : "")));
+    }
+    if (f.replied && f.replied.indexOf("Yes") === 0) {
+      out.push(stop("The candidate has replied to a message which could safely have been ignored" +
+        (f.replied === "Yes, the same day" ? ", on the same day" :
+         f.replied === "Yes, with a full answer" ? ", and with a full answer" : "")));
+    }
+    if (f.service) out.push(stop("In dealings with customer service, the record is as follows: " + lower1(f.service)));
+    if (f.fiveMinutes) out.push(stop("Told that a thing “should only take five minutes”, the candidate " +
+      lower1(f.fiveMinutes).replace(/^(accepts|says|sighs|clears|has)/, "$1")));
+    return out.join(" ");
+  }
+
+  function trialFacts(f) {
+    var endured = [];
+    if (f.ryanair && f.ryanair.indexOf("Yes") === 0) {
+      endured.push("carriage by Ryanair" +
+        (f.ryanairBag === "They measured it in advance" ? ", the baggage having been measured in advance" : ""));
+    }
+    if (f.gate && f.gate !== "Not applicable") {
+      endured.push("an airport boarding gate, faith in humanity " +
+        (f.gate === "Yes" ? "intact" : f.gate === "Outwardly" ? "intact outwardly" : "not intact"));
+    }
+    if (f.printer && f.printer.indexOf("Yes") === 0) {
+      endured.push("a printer" + (f.printerColour === "Yes, and it was a black and white document"
+        ? ", which claimed to be out of a colour the document did not contain" : ""));
+    }
+    if (f.password && f.password.indexOf("Yes") === 0) {
+      endured.push("the resetting of a relative’s password" +
+        (f.passwordTimes === "It is reset every time it is used" ? ", an account reset every time it is used" :
+         f.passwordTimes ? ", previously reset " + lower1(f.passwordTimes) : ""));
+    }
+    if (f.committee && f.committee.indexOf("Yes") === 0) {
+      endured.push("a committee meeting which should have been an email" + (f.committee === "Yes, weekly" ? ", weekly" : ""));
+    }
+    if (f.update && f.update.indexOf("Yes") === 0) {
+      endured.push("a software update at an inconvenient moment" + (f.update === "Yes, mid-task" ? ", mid-task" : ""));
+    }
+    var out = [];
+    if (f.adversity) out.push(stop("The candidate has endured the following: " + lower1(stop(f.adversity))));
+    if (endured.length) out.push(stop("The file further records that the candidate has withstood " + joinList(endured)));
+    if (f.polite) {
+      out.push(f.polite === "No, and the Registry regards this as understandable"
+        ? "Composure was not maintained throughout, which the Registry regards as understandable."
+        : stop("Composure throughout is described as " + lower1(f.polite)));
+    }
+    return out.join(" ");
+  }
+
+  function evidenceFacts(f, c) {
+    var out = [];
+    if (f.witness) out.push(stop("The principal witness is " + f.witness + (f.reliability ? ", assessed as " + lower1(f.reliability) : "")));
+    if (f.witnessSay) out.push("That witness would say, in substance: " + quoted(f.witnessSay));
+    if (c.witnesses) out.push(stop("Independent witnesses recorded: " + c.witnesses));
+    var held = [];
+    (f.classList || []).forEach(function (cl) {
+      if (cl === "None") return;
+      if (cl === "Strongly worded anecdote" && f.anecdoteText) return;
+      if (EVIDENCE_CLASS[cl]) held.push(EVIDENCE_CLASS[cl]);
+    });
+    if (!held.length && f.documentary === "Yes") held.push("documentary evidence");
+    if (f.documentary === "Possibly, in a drawer") held.push("documentary evidence which may be in a drawer");
+    if (f.photos === "Yes" && held.indexOf("a photograph") < 0) held.push("photographs");
+    else if (f.photos === "One, and it is blurred") held.push("a single blurred photograph");
+    if (f.screenshots === "Yes" && held.indexOf("screenshots") < 0) held.push("screenshots");
+    else if (f.screenshots === "Several, all undated") held.push("several undated screenshots");
+    if (held.length) out.push(stop("The evidence held comprises " + joinList(held)));
+    else out.push("No documentary evidence is held.");
+    if (f.hearsay && f.hearsay !== "No") {
+      out.push(stop("The Registry is asked to note that the evidence is " + lower1(f.hearsay) + " hearsay"));
+    }
+    if (f.anecdoteText) out.push(stop("A strongly worded anecdote is submitted in support: " + lower1(stop(f.anecdoteText))));
+    out.push(stop("Evidence strength is assessed by the Registry as " + (EV_PHRASE[c.evidence] || lower1(c.evidence))));
+    return out.join(" ");
+  }
+
+  var EV_PHRASE = { "Evidence mostly anecdotal": "mostly anecdotal" };
+
+  function patronageFacts(f, c) {
+    var out = [];
+    out.push(A("q46")
+      ? stop("The patronage sought is that of " + lower1(c.patronage))
+      : "No patronage has yet been specified, and the Registry is invited to determine one.");
+    if (f.object) out.push(stop("The candidate is best represented by " + lower1(f.object)));
+    if (c.feast) {
+      out.push(stop("A feast day of " + c.feast + " is proposed" +
+        (c.feastWhy ? ", on the grounds that " + lower1(c.feastWhy.replace(/^because\s+/i, "")) : "")));
+    }
+    out.push(A("q49")
+      ? stop("The miracle which might reasonably be expected of the candidate is " + lower1(c.miracle))
+      : "No miracle is alleged at this stage.");
+    return out.join(" ");
+  }
+
+  /* --- the five voices --------------------------------------- */
+  var STYLES = {
+    formal: {
+      name: "Respectfully Formal",
+      blurb: "Serious institutional correspondence. Short sentences, no adjectives that have not earned their place.",
+      subject: function (c) {
+        return pick([
+          "Formal Submission: Proposed Canonisation of " + c.name,
+          "Case " + c.ref + " — " + c.name,
+          "Submission for Consideration: " + c.name + " (Candidate " + c.no + ")"
+        ]);
+      },
+      salutation: "To the Public Canonisation Registry,",
+      open: function (f, c) {
+        return "I write to submit the case of " + c.name + " for consideration by the Registry. " +
+          (c.oneLine ? stop(c.oneLine) + " " : "") +
+          "The particulars are set out below and the supporting answers are held on file under reference " + c.ref + ".";
+      },
+      identity: function (f) { return identityFacts(f, true); },
+      actLead: "The act relied upon is as follows.",
+      characterLead: "The following is submitted as evidence of settled character.",
+      trialsLead: "The candidate has been tested in the ordinary way.",
+      evidenceLead: "As to the evidence, the following is recorded.",
+      patronageLead: "As to the recognition sought, the Registry is asked to note the following.",
+      close: function (f, c) {
+        return (f.argument ? stop(f.argument) + " " : "") +
+          "I would ask that the case be considered in the ordinary course, notwithstanding the current backlog, and I am content to supply further particulars if the Registry requires them.";
+      },
+      signoff: "Respectfully submitted,"
+    },
+
+    flowery: {
+      name: "Flowery",
+      blurb: "Elaborate, emotional and ceremonious. Uses three words where one would do, deliberately.",
+      subject: function (c) {
+        return pick([
+          "A Most Respectful Petition Concerning " + c.name,
+          "With the Greatest Respect: The Case of " + c.name,
+          "Humbly Submitted for the Registry’s Kind Attention — " + c.name
+        ]);
+      },
+      salutation: "Most esteemed members of the Registry,",
+      open: function (f, c) {
+        return "It is with the very greatest respect, and with a heart which has considered the matter at some length, that I lay before you the case of " +
+          c.name + (c.known ? ", known to all who love them as " + c.known : "") + ". " +
+          (c.oneLine ? stop(c.oneLine) + " " : "") +
+          "I am conscious that yours is an office of grave and unhurried judgement, and I would not trouble it lightly.";
+      },
+      identity: function (f) { return identityFacts(f, false); },
+      actLead: "Permit me, then, to set down what was done, plainly, so that the Registry may weigh it.",
+      characterLead: "Nor was this a solitary brightness in an otherwise unremarkable life.",
+      trialsLead: "And the candidate has suffered, as all of us must, the small and grinding trials of the age.",
+      evidenceLead: "As to proof, such as this world permits, the following is offered.",
+      patronageLead: "It is therefore, with every possible deference, that a patronage is proposed.",
+      close: function (f, c) {
+        return (f.argument ? stop(f.argument) + " " : "") +
+          "I ask nothing for myself. I ask only that this quiet and unremarkable goodness should not pass entirely unrecorded, and that the Registry, in its wisdom and in its own good time, should find a page for it.";
+      },
+      signoff: "With sincere and unfeigned respect,"
+    },
+
+    verbose: {
+      name: "Verbose",
+      blurb: "An unnecessarily comprehensive bureaucratic petition. Cross-references, subsections and a schedule.",
+      subject: function (c) {
+        return pick([
+          "Case " + c.ref + " — " + c.name + " — Petition for Consideration (Sections 1–6 refer)",
+          "Submission under the Registry’s Comprehensive Case Procedure: " + c.name + " (Candidate " + c.no + ")",
+          "Formal Petition and Supporting Schedule: " + c.name
+        ]);
+      },
+      salutation: "To the Registrar and to such officers as may be assigned,",
+      open: function (f, c) {
+        return "#N#. This petition is submitted pursuant to the Registry’s comprehensive case procedure and concerns Candidate " +
+          c.no + ", hereinafter “the candidate”, being " + c.name + " of " + c.loc + ". " +
+          "#N#. The petition comprises the present narrative together with the schedule of answers appended to the case file at reference " + c.ref + ". " +
+          "#N#. " + (c.oneLine ? stop(c.oneLine) : "The grounds are set out in full below.") + " " +
+          "#N#. The nominating party has completed " + c.answeredN + " of the Registry’s " + TOTAL + " questions, and does not consider any of the remainder to be material.";
+      },
+      identity: function (f) { return "#N#. As to identity and standing: " + (identityFacts(f, false) || "no further particulars are held."); },
+      actLead: "#N#. As to the principal act relied upon:",
+      characterLead: "#N#. As to the pattern of conduct said to establish settled character:",
+      trialsLead: "#N#. As to adversity endured, and conduct maintained under it:",
+      evidenceLead: "#N#. As to the evidence, its classification and its shortcomings:",
+      patronageLead: "#N#. As to the specific recognition sought:",
+      close: function (f, c) {
+        return "#N#. " + (f.argument ? stop(f.argument) + " " : "") +
+          "#N#. The nominating party is aware of the current estimated review period of 412 years and submits, with respect, that the present case is distinguishable. " +
+          "#N#. No response is required, none being expected, and none, on the Registry’s published figures, having ever been received.";
+      },
+      signoff: "Submitted in accordance with the procedure,"
+    },
+
+    dramatic: {
+      name: "Dramatic",
+      blurb: "The candidate’s story told as though presented before an ancient tribunal.",
+      subject: function (c) {
+        return pick([
+          "Petition for Extraordinary Consideration — " + c.name,
+          "In the Matter of " + c.name + ", and What Was Done That Day",
+          "Before the Registry: The Case of " + c.name
+        ]);
+      },
+      salutation: "Members of the Registry,",
+      open: function (f, c) {
+        var weather = pick(["a day of relentless rain", "an afternoon of no particular promise", "an ordinary hour of an ordinary week", "a morning that asked nothing of anybody"]);
+        var others = pick(["lesser citizens sought shelter", "others looked studiously at their phones", "the rest of us did precisely nothing", "the world went on about its business"]);
+        return capitalise(whenPhrase(c.when) || "on " + weather) + ", at " + (c.where || "a place of no distinction whatsoever") + ", while " + others + ", " +
+          c.name + " did a thing which nobody would have known about had somebody not been watching. " +
+          (c.oneLine ? stop(c.oneLine) + " " : "") +
+          "I was that somebody, and I bring it now before this Registry.";
+      },
+      identity: function (f) { return identityFacts(f, true); },
+      actLead: "Let the record show what then occurred.",
+      characterLead: "And let it be known that this was no aberration.",
+      trialsLead: "Consider, too, what this candidate has endured.",
+      evidenceLead: "The Registry will ask what proof there is. There is this.",
+      patronageLead: "For these reasons a patronage is sought, and it is sought precisely.",
+      close: function (f, c) {
+        return (f.argument ? stop(f.argument) + " " : "") +
+          "History will not record this act. No newspaper carried it, no camera caught it, and the candidate has never once mentioned it. " +
+          "That is exactly why it falls to this Registry, and to nobody else, to write it down.";
+      },
+      signoff: "Laid before you in earnest,"
+    },
+
+    maximum: {
+      name: "Maximum Canonisation",
+      blurb: "The grandest version the Registry will accept while remaining readable.",
+      subject: function (c) {
+        return pick([
+          "URGENT PETITION BEFORE THE REGISTRY CONCERNING THE EXCEPTIONAL VIRTUES OF " + c.name.toUpperCase(),
+          "MOST URGENT: THE EXTRAORDINARY CASE OF " + c.name.toUpperCase() + " (CANDIDATE " + c.no + ")",
+          "PETITION OF THE HIGHEST ORDER — " + c.name.toUpperCase() + " — FOR IMMEDIATE AND UNPRECEDENTED CONSIDERATION"
+        ]);
+      },
+      salutation: "To the Registry, its officers, its subcommittees, and to whatever authority sits above them,",
+      open: function (f, c) {
+        return "I come before this Registry not in hope but in certainty, and I bring the case of " + c.name +
+          (c.known ? ", called " + c.known + " by those fortunate enough to know them" : "") + ", of " + c.loc + ". " +
+          (c.oneLine ? stop(c.oneLine) + " " : "") +
+          "I am aware that the Registry has 8,421 cases awaiting miracle verification and an average review period of four hundred and twelve years. " +
+          "I say, respectfully, that those cases can wait, and that this one cannot.";
+      },
+      identity: function (f) { return identityFacts(f, false); },
+      actLead: "THE ACT ITSELF, which I set down exactly as it happened and without embellishment of any kind:",
+      characterLead: "AND YET this was, incredibly, an ordinary Tuesday for this person.",
+      trialsLead: "CONSIDER THE TRIALS through which this candidate has passed, and passed politely.",
+      evidenceLead: "THE EVIDENCE, which I place before the Registry in full and without reservation:",
+      patronageLead: "THE PATRONAGE SOUGHT, and I have thought about this a great deal:",
+      close: function (f, c) {
+        return (f.argument ? stop(f.argument) + " " : "") +
+          "I ask the Registry to act. Not in 2441. Not at the conclusion of the current backlog. Now, or as near to now as an institution of this kind is capable of managing. " +
+          "The candidate, I should add, must never be told that I have written this.";
+      },
+      signoff: "In the strongest possible terms, and with respect,"
+    }
+  };
+
+  var LENGTHS = {
+    brief:   { name: "Brief petition", blurb: "Three or four paragraphs. The act, the patronage, the request.",
+               parts: ["open", "act", "patronage", "close"] },
+    standard:{ name: "Standard petition", blurb: "The usual submission: who they are, what they did, who saw it.",
+               parts: ["open", "identity", "act", "evidence", "patronage", "close"] },
+    comprehensive: { name: "Comprehensive petition", blurb: "Every section of the questionnaire worked into the narrative.",
+               parts: ["open", "identity", "act", "character", "trials", "evidence", "patronage", "close"] },
+    exhaustive: { name: "Exhaustive case file", blurb: "The complete petition, with the schedule of answers appended in full. It is very long. That is the point.",
+               parts: ["open", "identity", "act", "character", "trials", "evidence", "patronage", "close", "schedule"] }
+  };
+
+  function answersBag() {
+    return {
+      name: A("q1") || "the candidate", known: A("q2"), age: A("q3"), place: A("q4"), occupation: A("q5"),
+      relation: A("q6"), howLong: A("q7"), reaction: A("q8"),
+      oneLine: A("q9"), act: A("q10"), when: A("q11"), where: A("q12"), whoSaw: A("q13"),
+      planned: A("q14"), expected: A("q15"), complained: A("q16"),
+      tea: A("q17"), teaWhat: A("q17a"), teaMade: A("q17b"), inconvenience: A("q18"), inconvenienceDesc: A("q18a"),
+      kindness: A("q19"), patience: A("q20"), tech: A("q21"), device: A("q21a"), timesTold: A("q21b"),
+      giveItHere: A("q21c"), toldYouSo: A("q21d"), fixed: A("q22"), seat: A("q23"), seatWho: A("q23a"),
+      seatPretend: A("q23b"), queue: A("q24"), queueItems: A("q24a"), service: A("q25"), fiveMinutes: A("q26"),
+      trolley: A("q27"), replied: A("q28"),
+      adversity: A("q29"), ryanair: A("q30"), ryanairBag: A("q30a"), gate: A("q31"), printer: A("q32"),
+      printerColour: A("q32a"), password: A("q33"), passwordTimes: A("q33a"), committee: A("q34"),
+      update: A("q35"), polite: A("q36"),
+      witness: A("q37"), witnessSay: A("q38"), reliability: A("q39"), independent: A("q40"),
+      documentary: A("q41"), classList: (Array.isArray(state.answers.q41a) ? state.answers.q41a : []), photos: A("q42"), screenshots: A("q43"),
+      hearsay: A("q44"), anecdote: A("q45"), anecdoteText: A("q45a"),
+      argument: A("q50")
+    };
+  }
+
+  function scheduleProse() {
+    var lines = ["SCHEDULE OF ANSWERS", ""];
+    SECTIONS.forEach(function (sec) {
+      var rows = [];
+      sec.questions.forEach(function (q) {
+        if (q.id === "consent") return;
+        if (answered(q)) rows.push((q.n ? q.n + ". " : "") + q.label + " — " + val(q.id));
+        if (q.follow && followVisible(q)) {
+          q.follow.questions.forEach(function (fq) {
+            if (answered(fq)) rows.push("    " + fq.label + " — " + val(fq.id));
+          });
+        }
+      });
+      if (rows.length) {
+        lines.push(sec.title.toUpperCase());
+        lines.push(rows.join("\n"));
+        lines.push("");
+      }
+    });
+    return lines.join("\n");
+  }
+
+  function buildBody(styleKey, lengthKey) {
+    var st = STYLES[styleKey], len = LENGTHS[lengthKey], f = answersBag(), c = CASE;
+    var paras = [];
+    len.parts.forEach(function (part) {
+      var text = "";
+      if (part === "open") text = st.open(f, c);
+      else if (part === "identity") text = st.identity(f);
+      else if (part === "act") text = [st.actLead, stop(f.act || c.principal), actFacts(f, styleKey === "dramatic")].filter(Boolean).join(" ");
+      else if (part === "character") { var ch = characterFacts(f); text = ch ? st.characterLead + " " + ch : ""; }
+      else if (part === "trials") { var tr = trialFacts(f); text = tr ? st.trialsLead + " " + tr : ""; }
+      else if (part === "evidence") text = st.evidenceLead + " " + evidenceFacts(f, c);
+      else if (part === "patronage") text = st.patronageLead + " " + patronageFacts(f, c);
+      else if (part === "close") text = st.close(f, c);
+      else if (part === "schedule") text = "";
+      if (text) paras.push(text.replace(/\s+/g, " ").trim());
+    });
+
+    var body = paras.join("\n\n");
+    if (styleKey === "verbose") {
+      var counter = 0;
+      body = body.replace(/#N#/g, function () { counter += 1; return String(counter); });
+    }
+    var out = st.salutation + "\n\n" + body + "\n\n" + st.signoff + "\n";
+    if (len.parts.indexOf("schedule") > -1) out += "\n" + scheduleProse() + "\n";
+    out += "\n----------------------------------------\n" +
+      "CASE PARTICULARS\n" +
+      "Case reference: " + c.ref + "\n" +
+      "Candidate number: " + c.no + "\n" +
+      "Candidate: " + c.name + (c.loc ? ", " + c.loc : "") + "\n" +
+      "Proposed patronage: " + c.patronage + "\n" +
+      "Evidence strength: " + c.evidence + "\n" +
+      "Independent witnesses: " + (c.witnesses || "none enumerated") + "\n" +
+      "Assessed case strength: " + c.strength.rating + "\n" +
+      "Investigation stage: " + c.stage + "\n" +
+      "Case officer: " + c.officer + "\n" +
+      "Projected review date: " + c.reviewDate + "\n" +
+      "----------------------------------------\n" +
+      "Prepared through the Public Canonisation Registry, an independent parody project. " +
+      "The Registry is not affiliated with the Vatican, the Catholic Church, the Holy See or any ecclesiastical authority, " +
+      "and no nomination has been submitted to any of them. This message was written on the sender’s own device and sent, if at all, by the sender.\n";
+    return out;
+  }
+
+  /* ==========================================================
+     Composer interface
+     ========================================================== */
+  function optionHTML(group, key, obj, checked) {
+    return '<label class="opt"><input type="radio" name="' + group + '" id="' + group + "-" + key + '" value="' + key + '"' +
+      (checked ? " checked" : "") + "> <span><b>" + esc(obj.name) + "</b><span>" + esc(obj.blurb) + "</span></span></label>";
+  }
+
+  function renderCompose() {
+    var storedTo = "";
+    try { storedTo = window.localStorage.getItem(RECIPIENT_KEY) || ""; } catch (e) { storedTo = ""; }
+    var to = storedTo || DEFAULT_RECIPIENT;
+
+    $("#compose").innerHTML =
+      '<h3 id="composeHeading" tabindex="-1">Prepare formal petition by email</h3>' +
+      "<p>The Registry will compose a petition from the answers on file. Choose the register in which it should be written and the length the case deserves.</p>" +
+
+      '<fieldset style="margin-top:22px"><legend class="legend">Style of petition</legend>' +
+        '<div class="opt-grid opt-grid--2">' +
+          optionHTML("pstyle", "formal", STYLES.formal, true) +
+          optionHTML("pstyle", "flowery", STYLES.flowery) +
+          optionHTML("pstyle", "verbose", STYLES.verbose) +
+          optionHTML("pstyle", "dramatic", STYLES.dramatic) +
+          optionHTML("pstyle", "maximum", STYLES.maximum) +
+        "</div></fieldset>" +
+
+      '<fieldset><legend class="legend">Length</legend>' +
+        '<div class="opt-grid opt-grid--2">' +
+          optionHTML("plen", "brief", LENGTHS.brief) +
+          optionHTML("plen", "standard", LENGTHS.standard, true) +
+          optionHTML("plen", "comprehensive", LENGTHS.comprehensive) +
+          optionHTML("plen", "exhaustive", LENGTHS.exhaustive) +
+        "</div></fieldset>" +
+
+      '<p class="note">The petition is written on this device from your own answers. Nothing is sent by this page, and nothing can be: it has no means of sending anything. You will be able to read and edit the whole message before your email application is opened.</p>' +
+      '<div class="btn-row"><button class="btn btn--primary" type="button" id="genPetition">Generate the petition</button></div>' +
+
+      '<div class="preview" id="preview" hidden>' +
+        '<div class="preview__head">' +
+          '<h4 id="previewHeading" tabindex="-1" style="margin:0">Prepared petition</h4>' +
+          '<div class="preview__row"><label for="petitionSubject">Subject</label>' +
+            '<input type="text" id="petitionSubject" autocomplete="off"></div>' +
+          '<div class="preview__row"><label for="petitionTo">Destination</label>' +
+            '<input type="email" id="petitionTo" autocomplete="off" placeholder="name@example.com" value="' + esc(to) + '" aria-describedby="petitionToHint">' +
+            '<span class="hint" id="petitionToHint" style="margin:0">The Registry publishes no address of its own. Enter the address this petition should be addressed to; it is remembered in this browser and nowhere else. Leaving it empty opens your email application with the recipient blank.</span></div>' +
+        "</div>" +
+        '<div class="preview__body">' +
+          '<label for="petitionBody" style="display:block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);font-weight:700;margin-bottom:6px">Petition (editable)</label>' +
+          '<textarea id="petitionBody" spellcheck="true" aria-describedby="petitionBodyHint"></textarea>' +
+          '<span class="hint" id="petitionBodyHint">Edit freely. Your changes are what will be carried into your email application.</span>' +
+          '<div class="warn" id="mailtoWarn" hidden></div>' +
+        "</div>" +
+        '<div class="preview__actions">' +
+          '<button class="btn btn--primary" type="button" id="openMail">Open in email app</button>' +
+          '<button class="btn btn--secondary" type="button" id="copyMail">Copy email</button>' +
+          '<button class="btn btn--secondary" type="button" id="regenMail">Regenerate</button>' +
+          '<button class="btn btn--ghost" type="button" id="changeStyle">Change style</button>' +
+          '<button class="btn btn--ghost" type="button" id="editNom">Edit nomination</button>' +
+        "</div>" +
+        '<p class="preview__actions live-note" id="composeLive" role="status" aria-live="polite"></p>' +
+        '<p class="note" style="padding:0 18px 18px">Opening your email application prepares a message. It does not send it. Nothing leaves your device until you press send yourself.</p>' +
+      "</div>";
+
+    $("#genPetition").addEventListener("click", function () { generate(true); });
+    $("#regenMail").addEventListener("click", function () { generate(false); $("#composeLive").textContent = "Petition regenerated in the same style."; });
+    $("#changeStyle").addEventListener("click", function () { $("#pstyle-formal").focus(); });
+    $("#editNom").addEventListener("click", function () { showRoute("case"); goStep(state.step); });
+    $("#copyMail").addEventListener("click", copyPetition);
+    $("#openMail").addEventListener("click", openMailApp);
+    $("#petitionBody").addEventListener("input", checkLength);
+    $("#petitionTo").addEventListener("change", function () {
+      try { window.localStorage.setItem(RECIPIENT_KEY, this.value.trim()); } catch (e) { /* storage unavailable */ }
+      checkLength();
+    });
+  }
+
+  function chosen(group, fallback) {
+    var el = $('input[name="' + group + '"]:checked');
+    return el ? el.value : fallback;
+  }
+
+  function generate(focusIt) {
+    var styleKey = chosen("pstyle", "formal"), lenKey = chosen("plen", "standard");
+    $("#petitionSubject").value = STYLES[styleKey].subject(CASE);
+    $("#petitionBody").value = buildBody(styleKey, lenKey);
+    $("#preview").hidden = false;
+    checkLength();
+    if (focusIt) {
+      $("#previewHeading").focus();
+      $("#composeLive").textContent = "Petition prepared in the " + STYLES[styleKey].name + " style, " +
+        LENGTHS[lenKey].name.toLowerCase() + ". Review and edit it below.";
+    }
+  }
+
+  function mailtoURL() {
+    var to = $("#petitionTo").value.trim();
+    var body = $("#petitionBody").value.replace(/\r?\n/g, "\r\n");
+    return "mailto:" + encodeURIComponent(to).replace(/%40/g, "@") +
+      "?subject=" + encodeURIComponent($("#petitionSubject").value) +
+      "&body=" + encodeURIComponent(body);
+  }
+
+  function checkLength() {
+    var url = mailtoURL(), warn = $("#mailtoWarn");
+    if (url.length > 1900) {
+      warn.hidden = false;
+      warn.textContent = "This petition runs to " + $("#petitionBody").value.length.toLocaleString("en-GB") +
+        " characters. Some email applications shorten a prepared message of this size. If the message opens truncated, use Copy email and paste it in instead — the full text is always copied.";
+    } else {
+      warn.hidden = true;
+      warn.textContent = "";
+    }
+  }
+
+  function copyPetition() {
+    var text = "Subject: " + $("#petitionSubject").value + "\n\n" + $("#petitionBody").value;
+    function done() { $("#composeLive").textContent = "Petition copied to the clipboard, subject line included."; }
+    function fallback() {
+      var ta = $("#petitionBody");
+      ta.focus();
+      ta.select();
+      try {
+        d.execCommand("copy");
+        $("#composeLive").textContent = "Petition copied to the clipboard.";
+      } catch (e) {
+        $("#composeLive").textContent = "Copying is not available in this browser. Select the text of the petition and copy it manually.";
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+  }
+
+  function openMailApp() {
+    var a = d.createElement("a");
+    a.href = mailtoURL();
+    a.style.display = "none";
+    d.body.appendChild(a);
+    a.click();
+    setTimeout(function () { d.body.removeChild(a); }, 0);
+    $("#composeLive").textContent = "Your email application has been asked to open a prepared message. Nothing has been sent; you will need to press send yourself.";
+  }
+
+  /* ==========================================================
+     Routes, resumption and boot
+     ========================================================== */
+  function showRoute(which) {
+    $("#routeChooser").hidden = which !== "chooser";
+    $("#quickRoute").hidden = which !== "quick";
+    $("#caseRoute").hidden = which !== "case";
+    $("#caseReview").hidden = which !== "review";
+  }
+
+  function refreshResumePanel() {
+    var saved = load();
+    var panel = $("#resumePanel");
+    if (!saved || !Object.keys(saved.answers).length) { panel.hidden = true; return; }
+    var n = 0;
+    SECTIONS.forEach(function (sec) {
+      sec.questions.forEach(function (q) {
+        var v = saved.answers[q.id];
+        if (q.n && v != null && (Array.isArray(v) ? v.length : String(v).trim().length)) n++;
+      });
+    });
+    var name = saved.answers.q1 ? String(saved.answers.q1).trim() : "";
+    $("#resumeDetail").textContent = "A partially completed dossier is held in this browser" +
+      (name ? " for " + name : "") + ": " + n + " of " + TOTAL + " questions answered, at section " +
+      ((saved.step || 0) + 1) + " of " + SECTIONS.length + ", under reference " + (saved.ref || "unassigned") + ".";
+    panel.hidden = false;
+  }
+
+  var saved = load();
+  if (saved) {
+    state.answers = saved.answers || {};
+    state.step = typeof saved.step === "number" ? saved.step : 0;
+    state.ref = saved.ref || newRef();
+    state.updated = saved.updated || 0;
+  } else {
+    state.ref = newRef();
+  }
+  $("#wizRef").textContent = state.ref;
+  if (saved && Object.keys(state.answers).length) $("#wizSaved").textContent = "Recovered from this browser";
+  refreshResumePanel();
+
+  $("#startQuick").addEventListener("click", function () {
+    showRoute("quick");
+    $("#quickHeading").focus();
+  });
+  $("#startCase").addEventListener("click", function () {
+    showRoute("case");
+    goStep(state.step);
+  });
+  $("#resumeCase").addEventListener("click", function () {
+    showRoute("case");
+    goStep(state.step);
+  });
+  $("#discardCase").addEventListener("click", function () {
+    if (!window.confirm("Discard the saved dossier? The answers held in this browser will be removed.")) return;
+    clearStore();
+    state = { answers: {}, step: 0, ref: newRef(), updated: 0 };
+    $("#wizRef").textContent = state.ref;
+    $("#wizSaved").textContent = "Not yet saved";
+    $("#resumePanel").hidden = true;
+    $("#startCase").focus();
+  });
+  $("#backFromQuick").addEventListener("click", function () {
+    showRoute("chooser");
+    $("#startQuick").focus();
+  });
+  $("#backFromCase").addEventListener("click", function () {
+    collect();
+    save(true);
+    showRoute("chooser");
+    refreshResumePanel();
+    $("#startCase").focus();
+  });
+
+  /* Deep links from elsewhere on the page open the chooser. */
+  $$('a[href="#nominate"]').forEach(function (a) {
+    a.addEventListener("click", function () {
+      if ($("#caseReview").hidden && $("#caseRoute").hidden) showRoute("chooser");
+    });
+  });
+
+  showRoute("chooser");
+})();
+</script>
+
 </body>
 </html>
